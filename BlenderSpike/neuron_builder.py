@@ -1,8 +1,7 @@
 import bpy
 import numpy as np
 import pickle
-from numpy import interp as linear_interpolation
-
+from .utils import linear_interpolation
 
 class BlenderSection():
     '''
