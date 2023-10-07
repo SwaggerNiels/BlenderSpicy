@@ -5,7 +5,7 @@ import sys
 
 bl_info = {
     "name" : "BlenderSpike",
-    "author" : "Artem Kirsanov",
+    "author" : "Artem Kirsanov & Niels Burghoorn",
     "description" : "Bring NEURON animations to Blender",
     "blender" : (3, 3, 0),
     "version" : (1, 0, 0),
