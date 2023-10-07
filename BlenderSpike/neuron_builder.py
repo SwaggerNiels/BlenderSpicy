@@ -300,7 +300,9 @@ class BlenderNeuron():
             section.ob = child_ob
             self.ALL_SECTIONS[section_ID] = section
 
-class VoltageGraph():
+## ------------------------------ Blender Graph container -----------------------------------
+
+class BlenderGraph():
     '''
         Container class for storing a voltage graph object
     '''
@@ -313,7 +315,6 @@ class VoltageGraph():
                  animation_folder = 'anims',
                  parent_ob = None,
                  ):
-        self.neuron = neuron
         self.animation_folder = animation_folder
         
         self.load_sections_dicts() # Loading sections dictionary
@@ -324,9 +325,6 @@ class VoltageGraph():
         else:
             self.parent_ob = parent_ob
             self.name = parent_ob.name
-
-    def fetch_segment_voltage(self):
-        self.neuron.sections_dicts
         
     def make_separate_plots(self,
                             foldername,
@@ -375,6 +373,11 @@ class VoltageGraph():
         for i in frames:
             _save_frames(i)
     
+    def build_graph(self,):
+        # bpy.ops.import_image.to_plane(directory=self.animation_folder)
+        print('build graph')
+
+        
 
 ## ------------------------------ OPERATORS -----------------------------------
 
@@ -487,11 +490,11 @@ class BLENDERSPIKE_OT_GraphBuilder(bpy.types.Operator):
 
         props = context.scene.blenderspike_graphbuild
 
-        graph = VoltageGraph(
+        graph = BlenderGraph(
             neuron=props,
             filepath=props.filepath,
             animation_folder=props.animation_folder,
-            )        
+            )
 
         print("Built a graph from {}".format(props.filepath))
         return {"FINISHED"}

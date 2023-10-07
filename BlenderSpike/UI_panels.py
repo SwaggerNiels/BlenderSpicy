@@ -2,7 +2,6 @@ import bpy
 
 # ----------------------- NEURON BUILDER UI -----------------------
 
-
 class BLENDERSPIKE_PT_NeuronBuilder(bpy.types.Panel):
     
     bl_label =  'Neuron Builder'
@@ -32,8 +31,8 @@ class BLENDERSPIKE_PT_NeuronBuilder(bpy.types.Panel):
         row = layout.row()
         row.operator("blenderspike.build_neuron")
 
-
 # ----------------------- ANIMATION MANAGER UI -----------------------
+
 class BLENDERSPIKE_PT_AnimationManager(bpy.types.Panel):
     bl_label = 'Animation manager'
     bl_space_type = "VIEW_3D"
@@ -48,8 +47,6 @@ class BLENDERSPIKE_PT_AnimationManager(bpy.types.Panel):
 
         row = layout.row()
         row.operator("blenderspike.remove_handlers")
-
-
 
 # ----------------------- SHADING UI -----------------------
 
@@ -79,6 +76,8 @@ class BLENDERSPIKE_PT_MaterialCreator(bpy.types.Panel):
         col = layout.column()
         col.operator("blenderspike.remove_materials")
         col.operator("blenderspike.setup_world")
+
+# ----------------------- GRAPH MANAGER UI -----------------------
 
 class BLENDERSPIKE_PT_GraphManager(bpy.types.Panel):
     
