@@ -79,9 +79,9 @@ class BLENDERSPICY_PT_MaterialCreator(bpy.types.Panel):
 
 # ----------------------- GRAPH MANAGER UI -----------------------
 
-class BLENDERSPICY_PT_GraphManager(bpy.types.Panel):
+class BLENDERSPICY_PT_GraphBuilder(bpy.types.Panel):
     
-    bl_label =  'Graph Manager'
+    bl_label =  'Graph builder'
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "BlenderSpicy"
@@ -92,5 +92,7 @@ class BLENDERSPICY_PT_GraphManager(bpy.types.Panel):
         
         col = layout.column()
         col.prop(props, "animation_folder")
+        col.seperator()
+        
         row = layout.row()
         row.operator("blenderspicy.build_graph")
