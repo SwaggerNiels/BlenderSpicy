@@ -433,17 +433,17 @@ class NeuronBuilderProps(bpy.types.PropertyGroup):
         subtype="FILE_PATH"
     )
     
-class BLENDERSPIKE_OT_NeuronBuilder(bpy.types.Operator):
+class BLENDERSPICY_OT_NeuronBuilder(bpy.types.Operator):
     '''
        Operator to load the NEURON dictionary and create the mesh
     '''
     
-    bl_idname = 'blenderspike.build_neuron'
+    bl_idname = 'blenderspicy.build_neuron'
     bl_label =  'Build a neuron'
     
     def execute(self, context):
 
-        props = context.scene.blenderspike_neuronbuild
+        props = context.scene.blenderspicy_neuronbuild
 
 
         neuron = BlenderNeuron(filepath=props.filepath, 
@@ -478,17 +478,17 @@ class GraphBuilderProps(bpy.types.PropertyGroup):
         subtype="FILE_PATH"
     )
 
-class BLENDERSPIKE_OT_GraphBuilder(bpy.types.Operator):
+class BLENDERSPICY_OT_GraphBuilder(bpy.types.Operator):
     '''
        Operator to load the NEURON voltage data from specific segment and create graph
     '''
     
-    bl_idname = 'blenderspike.build_graph'
+    bl_idname = 'blenderspicy.build_graph'
     bl_label =  'Build a graph'
     
     def execute(self, context):
 
-        props = context.scene.blenderspike_graphbuild
+        props = context.scene.blenderspicy_graphbuild
 
         graph = BlenderGraph(
             neuron=props,

@@ -2,16 +2,16 @@ import bpy
 
 # ----------------------- NEURON BUILDER UI -----------------------
 
-class BLENDERSPIKE_PT_NeuronBuilder(bpy.types.Panel):
+class BLENDERSPICY_PT_NeuronBuilder(bpy.types.Panel):
     
     bl_label =  'Neuron Builder'
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
-    bl_category = "BlenderSpike"
+    bl_category = "BlenderSpicy"
     
     def draw(self, context):
         layout = self.layout
-        props = context.scene.blenderspike_neuronbuild
+        props = context.scene.blenderspicy_neuronbuild
         col = layout.column()
         col.prop(props, "filepath")
         col.label(text="Coordinates", icon="GRID")
@@ -29,37 +29,37 @@ class BLENDERSPIKE_PT_NeuronBuilder(bpy.types.Panel):
     
 
         row = layout.row()
-        row.operator("blenderspike.build_neuron")
+        row.operator("blenderspicy.build_neuron")
 
 # ----------------------- ANIMATION MANAGER UI -----------------------
 
-class BLENDERSPIKE_PT_AnimationManager(bpy.types.Panel):
+class BLENDERSPICY_PT_AnimationManager(bpy.types.Panel):
     bl_label = 'Animation manager'
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
-    bl_category = "BlenderSpike"
+    bl_category = "BlenderSpicy"
     
     def draw(self, context):
         layout = self.layout
         
         row = layout.row()
-        row.operator("blenderspike.reload_animations") 
+        row.operator("blenderspicy.reload_animations") 
 
         row = layout.row()
-        row.operator("blenderspike.remove_handlers")
+        row.operator("blenderspicy.remove_handlers")
 
 # ----------------------- SHADING UI -----------------------
 
-class BLENDERSPIKE_PT_MaterialCreator(bpy.types.Panel):
+class BLENDERSPICY_PT_MaterialCreator(bpy.types.Panel):
     bl_label = 'Shading manager'
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
-    bl_category = "BlenderSpike"
+    bl_category = "BlenderSpicy"
     
     def draw(self, context):
         layout = self.layout
         
-        props = context.scene.blenderspike_materials
+        props = context.scene.blenderspicy_materials
         col = layout.column()
         col.prop(props, "min_value")
         col.prop(props, "max_value")
@@ -72,25 +72,25 @@ class BLENDERSPIKE_PT_MaterialCreator(bpy.types.Panel):
 
 
         row = layout.row()
-        row.operator("blenderspike.create_material")
+        row.operator("blenderspicy.create_material")
         col = layout.column()
-        col.operator("blenderspike.remove_materials")
-        col.operator("blenderspike.setup_world")
+        col.operator("blenderspicy.remove_materials")
+        col.operator("blenderspicy.setup_world")
 
 # ----------------------- GRAPH MANAGER UI -----------------------
 
-class BLENDERSPIKE_PT_GraphManager(bpy.types.Panel):
+class BLENDERSPICY_PT_GraphManager(bpy.types.Panel):
     
     bl_label =  'Graph Manager'
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
-    bl_category = "BlenderSpike"
+    bl_category = "BlenderSpicy"
     
     def draw(self, context):
         layout = self.layout
-        props = context.scene.blenderspike_graphbuild
+        props = context.scene.blenderspicy_graphbuild
         
         col = layout.column()
         col.prop(props, "animation_folder")
         row = layout.row()
-        row.operator("blenderspike.build_graph")
+        row.operator("blenderspicy.build_graph")

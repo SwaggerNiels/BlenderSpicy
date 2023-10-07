@@ -4,12 +4,12 @@ import subprocess
 import sys
 
 bl_info = {
-    "name" : "BlenderSpike",
+    "name" : "BlenderSpicy",
     "author" : "Artem Kirsanov & Niels Burghoorn",
     "description" : "Bring NEURON animations to Blender",
     "blender" : (3, 3, 0),
     "version" : (1, 0, 0),
-    "location" : "View3D > BlenderSpike",
+    "location" : "View3D > BlenderSpicy",
     "warning" : "",
     "category" : "3D View"
 }
@@ -42,10 +42,10 @@ def check_and_install_modules():
 
 check_and_install_modules() # This is called before any imports from the submodules
 
-from .neuron_builder import NeuronBuilderProps, BLENDERSPIKE_OT_NeuronBuilder
-from .animation_manager import BLENDERSPIKE_OT_HandlerRemover,BLENDERSPIKE_OT_AnimationLoader
-from .materials import VoltageMaterialProps, BLENDERSPIKE_OT_MaterialCreator, BLENDERSPIKE_OT_RemoveMatertials,BLENDERSPIKE_OT_SetupWorld
-from .UI_panels import BLENDERSPIKE_PT_NeuronBuilder,BLENDERSPIKE_PT_MaterialCreator, BLENDERSPIKE_PT_AnimationManager
+from .neuron_builder import NeuronBuilderProps, BLENDERSPICY_OT_NeuronBuilder
+from .animation_manager import BLENDERSPICY_OT_HandlerRemover,BLENDERSPICY_OT_AnimationLoader
+from .materials import VoltageMaterialProps, BLENDERSPICY_OT_MaterialCreator, BLENDERSPICY_OT_RemoveMatertials,BLENDERSPICY_OT_SetupWorld
+from .UI_panels import BLENDERSPICY_PT_NeuronBuilder,BLENDERSPICY_PT_MaterialCreator, BLENDERSPICY_PT_AnimationManager
 
 ordered_classes = [
     # Property Groups
@@ -53,31 +53,31 @@ ordered_classes = [
     VoltageMaterialProps,
 
     # Operators
-    BLENDERSPIKE_OT_NeuronBuilder,
-    BLENDERSPIKE_OT_HandlerRemover,
-    BLENDERSPIKE_OT_MaterialCreator,
-    BLENDERSPIKE_OT_RemoveMatertials,
-    BLENDERSPIKE_OT_AnimationLoader,
-    BLENDERSPIKE_OT_SetupWorld,
+    BLENDERSPICY_OT_NeuronBuilder,
+    BLENDERSPICY_OT_HandlerRemover,
+    BLENDERSPICY_OT_MaterialCreator,
+    BLENDERSPICY_OT_RemoveMatertials,
+    BLENDERSPICY_OT_AnimationLoader,
+    BLENDERSPICY_OT_SetupWorld,
 
     # UI Panels
-    BLENDERSPIKE_PT_NeuronBuilder,
-    BLENDERSPIKE_PT_AnimationManager,
-    BLENDERSPIKE_PT_MaterialCreator
+    BLENDERSPICY_PT_NeuronBuilder,
+    BLENDERSPICY_PT_AnimationManager,
+    BLENDERSPICY_PT_MaterialCreator
 ]
 
 def register():
     for cl in ordered_classes:
         bpy.utils.register_class(cl)
 
-    bpy.types.Scene.blenderspike_neuronbuild = bpy.props.PointerProperty(type = NeuronBuilderProps)
-    bpy.types.Scene.blenderspike_materials = bpy.props.PointerProperty(type = VoltageMaterialProps)
+    bpy.types.Scene.blenderspicy_neuronbuild = bpy.props.PointerProperty(type = NeuronBuilderProps)
+    bpy.types.Scene.blenderspicy_materials = bpy.props.PointerProperty(type = VoltageMaterialProps)
 
 def unregister():
     for cl in reversed(ordered_classes):
         bpy.utils.unregister_class(cl)
-    del bpy.types.Scene.blenderspike_neuronbuild
-    del bpy.types.Scene.blenderspike_materials
+    del bpy.types.Scene.blenderspicy_neuronbuild
+    del bpy.types.Scene.blenderspicy_materials
 
 if __name__ == "__main__":
     register()

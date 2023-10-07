@@ -164,17 +164,17 @@ class VoltageMaterialProps(bpy.types.PropertyGroup):
         max=30
     )
     
-class BLENDERSPIKE_OT_MaterialCreator(bpy.types.Operator):
+class BLENDERSPICY_OT_MaterialCreator(bpy.types.Operator):
     '''
         Create a material to color-code for voltage in set limits
     '''
 
-    bl_idname = 'blenderspike.create_material'
+    bl_idname = 'blenderspicy.create_material'
     bl_label = 'Create a voltage coloring'
 
     def execute(self, context):
 
-        props = context.scene.blenderspike_materials
+        props = context.scene.blenderspicy_materials
 
         
 
@@ -198,8 +198,8 @@ class BLENDERSPIKE_OT_MaterialCreator(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class BLENDERSPIKE_OT_RemoveMatertials(bpy.types.Operator):
-    bl_idname = 'blenderspike.remove_materials'
+class BLENDERSPICY_OT_RemoveMatertials(bpy.types.Operator):
+    bl_idname = 'blenderspicy.remove_materials'
     bl_label = 'Remove materials'
 
     def execute(self, context):
@@ -207,8 +207,8 @@ class BLENDERSPIKE_OT_RemoveMatertials(bpy.types.Operator):
             sec.data.materials.clear()
         return {'FINISHED'} 
 
-class BLENDERSPIKE_OT_SetupWorld(bpy.types.Operator):
-    bl_idname = 'blenderspike.setup_world'
+class BLENDERSPICY_OT_SetupWorld(bpy.types.Operator):
+    bl_idname = 'blenderspicy.setup_world'
     bl_label = 'Auto world setting'
 
     def execute(self, context):
