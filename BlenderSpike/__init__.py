@@ -71,7 +71,7 @@ def register():
         bpy.utils.register_class(cl)
 
     bpy.types.Scene.blenderspike_neuronbuild = bpy.props.PointerProperty(type = NeuronBuilderProps)
-    bpy.types.Scene.blenderspike_materials = bpy.props.PointerProperty(type =VoltageMaterialProps )
+    bpy.types.Scene.blenderspike_materials = bpy.props.PointerProperty(type = VoltageMaterialProps)
 
 def unregister():
     for cl in reversed(ordered_classes):

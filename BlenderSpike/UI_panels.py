@@ -80,3 +80,18 @@ class BLENDERSPIKE_PT_MaterialCreator(bpy.types.Panel):
         col.operator("blenderspike.remove_materials")
         col.operator("blenderspike.setup_world")
 
+class BLENDERSPIKE_PT_GraphManager(bpy.types.Panel):
+    
+    bl_label =  'Graph Manager'
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "BlenderSpike"
+    
+    def draw(self, context):
+        layout = self.layout
+        props = context.scene.blenderspike_graphbuild
+        
+        col = layout.column()
+        col.prop(props, "animation_folder")
+        row = layout.row()
+        row.operator("blenderspike.build_graph")
