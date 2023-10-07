@@ -1,0 +1,8 @@
+- Make button for each folder with animation images, such that it can be removed by one click
+- Add manual y-lim
+- Make sure the graph is oriented Z up
+- Make sure the graph is located near the segment with its origin bottom-left
+- Make a Benzier curve that is hooked to both the segment center and the graph origin
+- Make the Benzier optional and variable size
+- Give each of the textures a colormapper (automatic with seaborn colormap)
+- 

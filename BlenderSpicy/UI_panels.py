@@ -91,8 +91,9 @@ class BLENDERSPICY_PT_GraphBuilder(bpy.types.Panel):
         props = context.scene.blenderspicy_graphbuild
         
         col = layout.column()
+        col.prop(props, "filepath")
         col.prop(props, "animation_folder")
-        col.seperator()
+        col.prop(props, "linewidth")
         
         row = layout.row()
         row.operator("blenderspicy.build_graph")
