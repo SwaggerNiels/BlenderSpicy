@@ -3,6 +3,8 @@ import numpy as np
 import pickle
 import matplotlib.pyplot as plt
 import os
+from mathutils import Matrix, Vector
+
 from .utils import ShowMessageBox as out
 from .neuron_builder import BlenderSection
 import shutil
@@ -28,36 +30,70 @@ class BlenderGraph():
         
         self.load_sections_dicts() # Loading sections dictionary
 
-        self.parent_segment = bpy.context.selected_objects[0]
-        self.ob = self.build_graph()
+        self.parent_segment = bpy.context.selected_objects[0].name
+        self.name = f'graph_{self.parent_segment}'
+        print(self.name)
+        print(self.parent_segment)
+        self.build_graph()
         self.create_curve_to_segment()
     
     def create_curve_to_segment(self):
         ''' Create a bezier curve from the graph to the NEURON segment'''
 
         print("Creating curve to segment")
-        objs = [self.ob, self.parent_segment]
+        graph_obj,segment_obj = [bpy.data.objects[self.name], bpy.data.objects[self.parent_segment]]
         
-        name = '_'.join(['bezier'] + [o.name for o in objs])
+        name = f'bezier_{self.parent_segment}'
 
         curve = bpy.data.curves.new('curve_' + name, 'CURVE')
         spline = curve.splines.new('BEZIER')
         obj = bpy.data.objects.new(name, curve)
 
-        spline.bezier_points.add(len(objs) - 1)
+        spline.bezier_points.add(1)
 
-        for i, o in enumerate(objs):
-            p = spline.bezier_points[i]
-            p.co = o.location
-            p.handle_right_type = 'AUTO'
-            p.handle_left_type = 'AUTO'
+        empty_loc = segment_obj.parent.location
+        
+        #hook to furthest edge of segment
+        i=0
+        p = spline.bezier_points[i]
+        vi = np.argmax([(v.co - empty_loc).length for v in segment_obj.data.vertices])
+        p.co = segment_obj.data.vertices[vi].co
+        p.handle_right_type = 'AUTO'
+        p.handle_left_type = 'AUTO'
+        h = obj.modifiers.new(segment_obj.name, 'HOOK')
+        h.object = segment_obj
+        h.vertex_indices_set([a + i*3 for a in range(3)])
+        
+        #hook to graph origin
+        i=1
+        p = spline.bezier_points[i]
+        p.co = graph_obj.location
+        p.handle_right_type = 'AUTO'
+        p.handle_left_type = 'AUTO'
+        h = obj.modifiers.new(graph_obj.name, 'HOOK')
+        h.object = graph_obj
+        h.vertex_indices_set([a + i*3 for a in range(3)])
+        
+        obj.data.bevel_depth = 0.02
+        bpy.context.scene.collection.objects.link(obj)
+        
+        #make material for curve if needed and assign it
+        sg_mat = 'Segment-Graph_curves_material'
+        color = bpy.context.scene.blenderspicy_graphbuild.graph_color
+        if sg_mat in bpy.data.materials:
+            bpy.data.materials[sg_mat].node_tree.nodes["Principled BSDF"].inputs[0].default_value = color
+        else:
+            new_mat = bpy.data.materials.new(sg_mat)
+            new_mat.use_nodes = True
+            new_mat.node_tree.nodes.get("Principled BSDF").inputs[0].default_value = color
+            
+            obj.data.materials.append(new_mat)
 
-            h = obj.modifiers.new(o.name, 'HOOK')
-            h.object = o
-            h.vertex_indices_set([a + i*3 for a in range(3)])
+        # Link the material to the active object (assuming you have an active object)
+        obj.active_material = bpy.data.materials[sg_mat]
     
     def build_graph(self):
-        segment_type,segment_id = self.parent_segment.name.split('_')
+        segment_type,segment_id = self.parent_segment.split('_')
         segment_id = int(segment_id)
 
         filtered_data = [entry for entry in self.sections_dicts if 
@@ -67,10 +103,10 @@ class BlenderGraph():
         data = filtered_data[0]['Voltage']
         voltage_data = np.array([np.mean(data[vals]) for vals in data])
         
-        if bpy.context.scene.blenderspicy_graphbuild.plot_type == 'MPL':
-            graph = self._buid_MPL_graph(voltage_data,
+        if bpy.context.scene.blenderspicy_graphbuild.plot_mode == 'MPL':
+            graph = self._build_MPL_graph(voltage_data,
                                          self.animation_folder,
-                                         self.parent_segment.name)
+                                         self.parent_segment)
         
         return(graph)
 
@@ -93,12 +129,25 @@ class BlenderGraph():
         graph = bpy.context.selected_objects[0]
         graph.name = f'graph_{name}'
         
+        #set origin to lower left
+        me = graph.data
+        mw = graph.matrix_world
+        origin = me.vertices[0].co#sum((v.co for v in me.vertices), Vector()) / len(me.vertices)
+
+        T = Matrix.Translation(-origin)
+        me.transform(T)
+        mw.translation = mw @ origin
+        
+        # set material
         mat = graph.active_material
         mat.name = f'anim_{name}'
         mat.node_tree.nodes["Image Texture"].interpolation = 'Closest'
         mat.node_tree.links.remove(mat.node_tree.nodes["Image Texture"].outputs[0].links[0])
         mat.node_tree.nodes["Principled BSDF"].inputs[0].default_value = bpy.context.scene.blenderspicy_graphbuild.graph_color
-        
+    
+    def _check_data_dimensionality(self,):
+        pass
+    
     def _make_separate_plots(self,
                             folder_path,
                             voltage_data : np.array,
@@ -230,9 +279,19 @@ def update_graph_color(self, context):
     # This function will be called when the graph_color property changes
     # You can access the updated value with self.graph_color
     props = context.scene.blenderspicy_graphbuild
+    
+    #change all graphs colors
     for graph in props.graphs:
-        mat = bpy.data.materials['anim_' + graph.name[6:]]
+        mat = bpy.data.materials['anim_' + graph.name]
         mat.node_tree.nodes["Principled BSDF"].inputs[0].default_value = self.graph_color
+    
+    #change all segment-graph curves colors
+    sg_mat = 'Segment-Graph_curves_material'
+    if sg_mat in bpy.data.materials:
+        bpy.data.materials[sg_mat].node_tree.nodes["Principled BSDF"].inputs[0].default_value = self.graph_color
+    else:
+        new_mat = bpy.ops.material.new()
+        new_mat.node_tree.nodes["Principled BSDF"].inputs[0].default_value = self.graph_color
 
 def update_plot_mode(self, context):
     pass
@@ -313,7 +372,7 @@ class BLENDERSPICY_OT_GraphBuilder(bpy.types.Operator):
         
         items = props.graphs
         item = items.add()
-        item.name = bgraph.parent_segment.name
+        item.name = bgraph.parent_segment
 
         print("Built a graph from {}".format(props.filepath))
         print("Saved images in {}".format(props.animation_folder))
@@ -330,10 +389,13 @@ class BLENDERSPICY_OT_GraphRemove(bpy.types.Operator):
 
         items = props.graphs
         
-        #remove object
+        #remove object and its segment curve
         try:
             bpy.ops.object.select_all(action='DESELECT')
             bpy.data.objects["graph_" + items[self.index].name].select_set(True)
+            bpy.ops.object.delete() 
+            bpy.ops.object.select_all(action='DESELECT')
+            bpy.data.objects["bezier_" + items[self.index].name].select_set(True)
             bpy.ops.object.delete() 
         except:
             out(f'Could not remove object: {"graph_" + items[self.index].name}')

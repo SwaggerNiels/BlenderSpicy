@@ -88,4 +88,6 @@ def unregister():
 
 if __name__ == "__main__":
     register()
+    bpy.context.space_data.overlay.show_relationship_lines = False
+
     
