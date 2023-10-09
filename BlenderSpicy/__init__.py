@@ -42,7 +42,7 @@ def check_and_install_modules():
 
 check_and_install_modules() # This is called before any imports from the submodules
 
-from .graph_builder import GraphBuilderProps, BLENDERSPICY_OT_GraphBuilder
+from .graph_builder import GraphBuilderProps, BLENDERSPICY_OT_GraphBuilder, BLENDERSPICY_OT_GraphRemove
 from .neuron_builder import NeuronBuilderProps, BLENDERSPICY_OT_NeuronBuilder
 from .animation_manager import BLENDERSPICY_OT_HandlerRemover,BLENDERSPICY_OT_AnimationLoader
 from .materials import VoltageMaterialProps, BLENDERSPICY_OT_MaterialCreator, BLENDERSPICY_OT_RemoveMatertials,BLENDERSPICY_OT_SetupWorld
@@ -57,6 +57,7 @@ ordered_classes = [
     # Operators
     BLENDERSPICY_OT_NeuronBuilder,
     BLENDERSPICY_OT_GraphBuilder,
+    BLENDERSPICY_OT_GraphRemove,
     BLENDERSPICY_OT_HandlerRemover,
     BLENDERSPICY_OT_MaterialCreator,
     BLENDERSPICY_OT_RemoveMatertials,

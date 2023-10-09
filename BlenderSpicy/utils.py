@@ -1,3 +1,4 @@
+import bpy
 import numpy as np
 from scipy.interpolate import interp1d
 
@@ -14,3 +15,17 @@ def linear_interpolation(source_data, n_points):
     output= interF(output_prop)
     
     return output
+
+
+def ShowMessageBox(message = "", title = "Message Box", icon = 'INFO'):
+    '''
+    Popup message. Syntax:
+        ShowMessageBox("This is a message") 
+        ShowMessageBox("This is a message", "This is a custom title")
+        ShowMessageBox("This is a message", "This is a custom title", 'ERROR')
+    '''
+
+    def draw(self, context):
+        self.layout.label(text=message)
+
+    bpy.context.window_manager.popup_menu(draw, title = title, icon = icon)

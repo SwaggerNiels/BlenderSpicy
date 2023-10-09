@@ -91,9 +91,30 @@ class BLENDERSPICY_PT_GraphBuilder(bpy.types.Panel):
         props = context.scene.blenderspicy_graphbuild
         
         col = layout.column()
+        col.label(text="Paths", icon='FILE_TICK')
         col.prop(props, "filepath")
         col.prop(props, "animation_folder")
-        col.prop(props, "linewidth")
         
+        col = layout.column()
+        col.label(text="Graphs", icon='GRAPH')
         row = layout.row()
-        row.operator("blenderspicy.build_graph")
+        row.prop(props, "plot_mode", expand=True)
+        
+        if props.plot_mode == 'MPL':
+            col = layout.column()
+            col.prop(props, "linewidth")
+            col.prop(props, "graph_color")
+            
+            row = layout.row()
+            row.operator("blenderspicy.build_graph")
+            row.separator()
+            
+        
+        # List of graphs with delete buttons
+        items = props.graphs
+        for i, item in enumerate(items):
+            row = layout.row()
+            row.alignment = "RIGHT"
+            row.label(text=item.name)
+            row.operator("blenderspicy.delete_item", icon='TRASH', text='', emboss=False).index = i
+            row.separator()

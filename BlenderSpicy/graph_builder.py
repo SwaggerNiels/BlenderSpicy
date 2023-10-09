@@ -3,13 +3,15 @@ import numpy as np
 import pickle
 import matplotlib.pyplot as plt
 import os
+from .utils import ShowMessageBox as out
+from .neuron_builder import BlenderSection
 import shutil
 
 ## ------------------------------ Blender Graph container -----------------------------------
 
 class BlenderGraph():
     '''
-        Container class for storing a voltage graph object
+        Container class for storing a graph object
     '''
     def load_sections_dicts(self):
         ''' Load the dictionary of Sections data (exported from neuron) into the sections_dicts attribute'''
@@ -19,38 +21,85 @@ class BlenderGraph():
     def __init__(self,
                  filepath,
                  animation_folder = 'anims',
-                 parent_ob = None,
                  ):
-        self.name = "GRAPH"
         self.filepath = filepath
         self.animation_folder = animation_folder
+        self.mat = None
         
         self.load_sections_dicts() # Loading sections dictionary
 
         self.parent_segment = bpy.context.selected_objects[0]
-        
-        if parent_ob is None:
-            self.create_parent_empty()
-            self.set_parent_metadata()
-        else:
-            self.parent_ob = parent_ob
-            self.name = parent_ob.name
+        self.ob = self.build_graph()
+        self.create_curve_to_segment()
     
-    def create_parent_empty(self):
-        ''' Create a parent EMPTY Blender object, which holds metadata'''
+    def create_curve_to_segment(self):
+        ''' Create a bezier curve from the graph to the NEURON segment'''
 
-        print("Creating parent object")
-        bpy.ops.object.empty_add(type='ARROWS',location=(self.sections_dicts[0]["X"][0],self.sections_dicts[0]["Y"][0],self.sections_dicts[0]["Z"][0]), rotation=(0, 0, 0))
-        self.parent_ob = bpy.context.selected_objects[0]
-        self.parent_ob.name = self.name
+        print("Creating curve to segment")
+        objs = [self.ob, self.parent_segment]
         
-    def set_parent_metadata(self):
-        ''' Store metadata in a custom properties of the parent EMPTY object '''
-        attrs_to_save = ["filepath", "animation_folder"]
-        for attr in attrs_to_save:
-            self.parent_ob[attr] = getattr(self, attr)
+        name = '_'.join(['bezier'] + [o.name for o in objs])
+
+        curve = bpy.data.curves.new('curve_' + name, 'CURVE')
+        spline = curve.splines.new('BEZIER')
+        obj = bpy.data.objects.new(name, curve)
+
+        spline.bezier_points.add(len(objs) - 1)
+
+        for i, o in enumerate(objs):
+            p = spline.bezier_points[i]
+            p.co = o.location
+            p.handle_right_type = 'AUTO'
+            p.handle_left_type = 'AUTO'
+
+            h = obj.modifiers.new(o.name, 'HOOK')
+            h.object = o
+            h.vertex_indices_set([a + i*3 for a in range(3)])
+    
+    def build_graph(self):
+        segment_type,segment_id = self.parent_segment.name.split('_')
+        segment_id = int(segment_id)
+
+        filtered_data = [entry for entry in self.sections_dicts if 
+                        entry['type'] == segment_type and 
+                        entry['ID'] == segment_id]
         
-    def make_separate_plots(self,
+        data = filtered_data[0]['Voltage']
+        voltage_data = np.array([np.mean(data[vals]) for vals in data])
+        
+        if bpy.context.scene.blenderspicy_graphbuild.plot_type == 'MPL':
+            graph = self._buid_MPL_graph(voltage_data,
+                                         self.animation_folder,
+                                         self.parent_segment.name)
+        
+        return(graph)
+
+    def _build_MPL_graph(self,
+                         data, 
+                         folder,
+                         name, 
+                         ):
+        # open pickle file and process to plots
+        folder_path = f'{folder}{name}'
+        self._make_separate_plots(folder_path,data)
+        
+        files = [{"name": 'f', "name": f} 
+                 for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
+         
+        bpy.ops.import_image.to_plane(files=files, 
+                                      directory=folder_path, 
+                                      image_sequence=True, 
+                                      relative=False)
+        graph = bpy.context.selected_objects[0]
+        graph.name = f'graph_{name}'
+        
+        mat = graph.active_material
+        mat.name = f'anim_{name}'
+        mat.node_tree.nodes["Image Texture"].interpolation = 'Closest'
+        mat.node_tree.links.remove(mat.node_tree.nodes["Image Texture"].outputs[0].links[0])
+        mat.node_tree.nodes["Principled BSDF"].inputs[0].default_value = bpy.context.scene.blenderspicy_graphbuild.graph_color
+        
+    def _make_separate_plots(self,
                             folder_path,
                             voltage_data : np.array,
                             colval=1,
@@ -68,6 +117,7 @@ class BlenderGraph():
         # voltage plot
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
+            images_name = bpy.path.display_name_from_filepath(folder_path)
 
             if zero_start:
                 y = np.array([np.min(voltage_data)] + list(voltage_data))
@@ -79,7 +129,7 @@ class BlenderGraph():
 
             def _save_frames(i):
                 line.set_data(x[:i], y[:i])
-                filename = folder_path + f'/frame_{i:04d}.png'
+                filename = folder_path + f'/{images_name}_{i:04d}.png'
                 plt.savefig(filename, transparent=True)
                 
                 return line,
@@ -96,37 +146,98 @@ class BlenderGraph():
             print('Graph animation already generated')
             pass
     
-    def build_graph(self,):
-        desired_type,desired_id = self.parent_segment.name.split('_')
-        desired_id = int(desired_id)
 
-        filtered_data = [entry for entry in self.sections_dicts if 
-                        entry['type'] == desired_type and 
-                        entry['ID'] == desired_id]
-        
-        data = filtered_data[0]['Voltage']
-        voltage_data = np.array([np.mean(data[vals]) for vals in data])
-        
-        folder_name = f'{desired_type}_{desired_id}'
-        folder_path = f'{self.animation_folder}{folder_name}'
-        
-        # open pickle file and process to plots
-        self.make_separate_plots(folder_path,voltage_data)
-        
-        files = [{"name": f, "name": f} 
-                 for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
-        print(files)
-        # file_array = 
-        bpy.ops.import_image.to_plane(files=files, 
-                                      directory=folder_path, 
-                                      image_sequence=True, 
-                                      relative=False)
-    
-    def remove_images(self, folder_path):
-        # shutil.rmtree(folder_path)
-        # os.makedirs(folder_path)
-        pass
+class BlenderNativeGraph():
+    def make_spline():
+        x = np.linspace(-5,5,100)
+        y = np.sin(x*2)
 
+        xt = np.meshgrid(np.linspace(-5,5,100),np.linspace(0,3,4))
+        xt = xt[0]+xt[1]
+        yt = np.sin(2*(xt))
+
+        points = list(zip(x,y))
+        points_t = np.array([ [(xi,yi) for xi,yi in zip(xyt[0],xyt[1])] for xyt in zip(xt,yt)])
+            
+        #plot_2D_line(points, name = '2D_line')
+        print(points_t)
+        plot_2Dt_line(points_t, name = '2Dt_line')
+        #plot_2D_scatter(points, name = '2D_scatter')
+        
+    def plot_2D_line(points_2D, name="object_name", Z=0):
+        points_3D = [[point[0],point[1],Z] for point in points_2D]
+        
+        # make a new curve
+        crv = bpy.data.curves.new('crv', 'CURVE')
+        crv.dimensions = '3D'
+
+        # make a new spline in that curve
+        spline = crv.splines.new(type='POLY')
+
+        # a spline point for each point
+        spline.points.add(len(points_3D)-1) # theres already one point by default
+
+        # assign the point coordinates to the spline points
+        for p, new_co in zip(spline.points, points_3D):
+            p.co = (new_co + [1.0]) # (add nurbs weight)
+
+        # make a new object with the curve
+        obj = bpy.data.objects.new(name, crv)
+        obj.data.bevel_depth = .2
+        obj.data.use_fill_caps = True
+        bpy.context.scene.collection.objects.link(obj)
+        
+    def plot_2Dt_line(points_2Dt, name="object_name", Z=0):
+        points_3Dt = [[[point[0],point[1],Z] for point in points_2D] for points_2D in points_2Dt]
+        
+        # make a new curve
+        crv = bpy.data.curves.new('crv', 'CURVE')
+        crv.dimensions = '3D'
+
+        # make a new spline in that curve
+        spline = crv.splines.new(type='POLY')
+
+        # a spline point for each point
+        spline.points.add(len(points_3Dt[0])-1) # theres already one point by default
+        print(len(points_3Dt[0]))
+        
+        for i, points_3D in enumerate(points_3Dt):
+            print(len(points_3D))
+            for p, new_co in zip(spline.points, points_3D):
+                p.co = (new_co + [1.0]) # (add nurbs weight)
+            for point in spline.points:
+                point.keyframe_insert(data_path="co", frame = i)
+
+        # make a new object with the curve
+        obj = bpy.data.objects.new(name, crv)
+        obj.data.bevel_depth = .2
+        obj.data.use_fill_caps = True
+        bpy.context.scene.collection.objects.link(obj)
+        
+    def plot_2Dscatter(points_2D, name="object_name", Z=0):
+        points_3D = [[point[0],point[1],Z] for point in points_2D]
+        
+        ico = bpy.data.meshes.new('ICOSPHERE')
+        
+        for point in points_3D:
+            # make a new object with the curve
+            obj = bpy.data.objects.new(name, ico)
+    #        obj.data.diameter = 1
+            bpy.context.scene.collection.objects.link(obj)
+
+# Callback functions
+def update_graph_color(self, context):
+    # This function will be called when the graph_color property changes
+    # You can access the updated value with self.graph_color
+    props = context.scene.blenderspicy_graphbuild
+    for graph in props.graphs:
+        mat = bpy.data.materials['anim_' + graph.name[6:]]
+        mat.node_tree.nodes["Principled BSDF"].inputs[0].default_value = self.graph_color
+
+def update_plot_mode(self, context):
+    pass
+
+############################ Properties ########################################
 
 class GraphBuilderProps(bpy.types.PropertyGroup):
     '''
@@ -134,20 +245,45 @@ class GraphBuilderProps(bpy.types.PropertyGroup):
     '''
 
     filepath: bpy.props.StringProperty(
-        name="Path to .pickle",
+        name="data",
         subtype="FILE_PATH"
     )
 
     animation_folder: bpy.props.StringProperty(
-        name="Path to store graphs",
+        name="plot storage",
         subtype="FILE_PATH"
     )
     
+    plot_mode : bpy.props.EnumProperty(
+        name = "MPL or Native",
+        description = "Mode of plottin",
+        items = [
+            ('MPL', 'MPL', 'Matplotlib generated pngs in a texture'),           
+            ('Native', 'Native', 'Generated from blender objects only, no textures'),           
+        ],
+        update=update_plot_mode
+    )
+    
     linewidth : bpy.props.IntProperty(
-        name="Linewidth",
+        name="Line width",
         min=1,
         soft_max=100,
         default = 5
+    )
+    
+    graphs : bpy.props.CollectionProperty(
+        type=bpy.types.PropertyGroup,
+        name="Graphs"
+    )
+    
+    graph_color : bpy.props.FloatVectorProperty(
+        name="",
+        subtype='COLOR',
+        default=(1.0, 1.0, 1.0, 1.0),
+        min=0.0, max=1.0,
+        size = 4,
+        description="color picker",
+        update=update_graph_color,
     )
 
 class BLENDERSPICY_OT_GraphBuilder(bpy.types.Operator):
@@ -162,15 +298,58 @@ class BLENDERSPICY_OT_GraphBuilder(bpy.types.Operator):
 
         props = context.scene.blenderspicy_graphbuild
 
-        graph = BlenderGraph(
+        if ((bpy.context.selected_objects == []) or
+            (not hasattr(bpy.context.selected_objects[0], "parent")) or 
+            (not hasattr(bpy.context.selected_objects[0].parent, "name")) or 
+            (not bpy.context.selected_objects[0].parent.name.startswith('NEURON'))):
+            out('Please select a NEURON segment before building a graph.')
+            return {"FINISHED"}
+            
+
+        bgraph = BlenderGraph(
             filepath=props.filepath,
             animation_folder=props.animation_folder,
             )
         
-        graph.build_graph()
+        items = props.graphs
+        item = items.add()
+        item.name = bgraph.parent_segment.name
 
         print("Built a graph from {}".format(props.filepath))
         print("Saved images in {}".format(props.animation_folder))
         return {"FINISHED"}
 
+class BLENDERSPICY_OT_GraphRemove(bpy.types.Operator):
+    bl_idname = "blenderspicy.delete_item"
+    bl_label = "Delete Item"
     
+    index: bpy.props.IntProperty()
+
+    def execute(self, context):
+        props = context.scene.blenderspicy_graphbuild
+
+        items = props.graphs
+        
+        #remove object
+        try:
+            bpy.ops.object.select_all(action='DESELECT')
+            bpy.data.objects["graph_" + items[self.index].name].select_set(True)
+            bpy.ops.object.delete() 
+        except:
+            out(f'Could not remove object: {"graph_" + items[self.index].name}')
+            
+        #remove animation folder
+        try:
+            folder_path = f'{props.animation_folder}{items[self.index].name}'
+            shutil.rmtree(folder_path)
+            out(f'Removed: {folder_path}')
+        except:
+            out(f'Could not remove folder: {folder_path}')
+        
+        #remove from list
+        try:
+            items.remove(self.index)
+        except:
+            out(f'Could not remove graph from list (index=): {self.index}')
+        
+        return {'FINISHED'}
