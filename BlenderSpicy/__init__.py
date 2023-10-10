@@ -42,11 +42,30 @@ def check_and_install_modules():
 
 check_and_install_modules() # This is called before any imports from the submodules
 
-from .graph_builder import GraphBuilderProps, BLENDERSPICY_OT_GraphBuilder, BLENDERSPICY_OT_GraphRemove
-from .neuron_builder import NeuronBuilderProps, BLENDERSPICY_OT_NeuronBuilder
-from .animation_manager import BLENDERSPICY_OT_HandlerRemover,BLENDERSPICY_OT_AnimationLoader
-from .materials import VoltageMaterialProps, BLENDERSPICY_OT_MaterialCreator, BLENDERSPICY_OT_RemoveMatertials,BLENDERSPICY_OT_SetupWorld
-from .UI_panels import BLENDERSPICY_PT_NeuronBuilder, BLENDERSPICY_PT_GraphBuilder,BLENDERSPICY_PT_MaterialCreator, BLENDERSPICY_PT_AnimationManager
+#graph_builder
+from .graph_builder import GraphBuilderProps
+from .graph_builder import BLENDERSPICY_OT_GraphBuilder
+from .graph_builder import BLENDERSPICY_OT_GraphRemove
+
+#neuron_builder
+from .neuron_builder import NeuronBuilderProps
+from .neuron_builder import BLENDERSPICY_OT_NeuronBuilder
+
+#animation_manager
+from .animation_manager import BLENDERSPICY_OT_HandlerRemover
+from .animation_manager import BLENDERSPICY_OT_AnimationLoader
+
+#materials
+from .materials import VoltageMaterialProps
+from .materials import BLENDERSPICY_OT_MaterialCreator
+from .materials import BLENDERSPICY_OT_RemoveMatertials
+from .materials import BLENDERSPICY_OT_SetupWorld
+
+#UI_panels
+from .UI_panels import BLENDERSPICY_PT_NeuronBuilder
+from .UI_panels import BLENDERSPICY_PT_GraphBuilder
+from .UI_panels import BLENDERSPICY_PT_MaterialCreator
+from .UI_panels import BLENDERSPICY_PT_AnimationManager
 
 ordered_classes = [
     # Property Groups
@@ -75,6 +94,7 @@ def register():
     for cl in ordered_classes:
         bpy.utils.register_class(cl)
 
+    #add property classes
     bpy.types.Scene.blenderspicy_neuronbuild = bpy.props.PointerProperty(type = NeuronBuilderProps)
     bpy.types.Scene.blenderspicy_graphbuild = bpy.props.PointerProperty(type = GraphBuilderProps)
     bpy.types.Scene.blenderspicy_materials = bpy.props.PointerProperty(type = VoltageMaterialProps)
@@ -82,12 +102,16 @@ def register():
 def unregister():
     for cl in reversed(ordered_classes):
         bpy.utils.unregister_class(cl)
+        
+    #remove property classes
     del bpy.types.Scene.blenderspicy_neuronbuild
     del bpy.types.Scene.blenderspicy_graphbuild
     del bpy.types.Scene.blenderspicy_materials
 
 if __name__ == "__main__":
     register()
+    
+    #addon specific blender settings
     bpy.context.space_data.overlay.show_relationship_lines = False
 
     

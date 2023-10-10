@@ -31,7 +31,53 @@ class BLENDERSPICY_PT_NeuronBuilder(bpy.types.Panel):
         row = layout.row()
         row.operator("blenderspicy.build_neuron")
 
-# ----------------------- ANIMATION MANAGER UI -----------------------
+# ----------------------- GRAPH MANAGER UI ------------------------
+
+class BLENDERSPICY_PT_GraphBuilder(bpy.types.Panel):
+    
+    bl_label =  'Graph builder'
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "BlenderSpicy"
+    
+    def draw(self, context):
+        layout = self.layout
+        props = context.scene.blenderspicy_graphbuild
+        
+        col = layout.column()
+        col.label(text="Paths", icon='FILE_TICK')
+        col.prop(props, "filepath")
+        col.prop(props, "animation_folder")
+        
+        col = layout.column()
+        col.label(text="Graphs", icon='GRAPH')
+        row = layout.row()
+        row.prop(props, "plot_mode", expand=True)
+        
+        #Mode specific UI (matplotlib textures or Blender native)
+        if props.plot_mode == 'MPL':
+            col = layout.column()
+            col.prop(props, "linewidth")
+            col.prop(props, "graph_color")
+            
+            row = layout.row()
+            row.operator("blenderspicy.build_graph")
+            row.separator()
+            
+        elif props.plot_mode == 'NATIVE':
+            pass
+        
+        # List of generated graphs with delete buttons
+        items = props.graphs
+        for i, item in enumerate(items):
+            row = layout.row()
+            row.alignment = "RIGHT"
+            
+            row.label(text=item.name)
+            row.operator("blenderspicy.delete_item", icon='TRASH', text='', emboss=False).index = i
+            row.separator()
+
+# ----------------------- ANIMATION MANAGER UI --------------------
 
 class BLENDERSPICY_PT_AnimationManager(bpy.types.Panel):
     bl_label = 'Animation manager'
@@ -48,7 +94,7 @@ class BLENDERSPICY_PT_AnimationManager(bpy.types.Panel):
         row = layout.row()
         row.operator("blenderspicy.remove_handlers")
 
-# ----------------------- SHADING UI -----------------------
+# ----------------------- SHADING UI ------------------------------
 
 class BLENDERSPICY_PT_MaterialCreator(bpy.types.Panel):
     bl_label = 'Shading manager'
@@ -76,45 +122,3 @@ class BLENDERSPICY_PT_MaterialCreator(bpy.types.Panel):
         col = layout.column()
         col.operator("blenderspicy.remove_materials")
         col.operator("blenderspicy.setup_world")
-
-# ----------------------- GRAPH MANAGER UI -----------------------
-
-class BLENDERSPICY_PT_GraphBuilder(bpy.types.Panel):
-    
-    bl_label =  'Graph builder'
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_category = "BlenderSpicy"
-    
-    def draw(self, context):
-        layout = self.layout
-        props = context.scene.blenderspicy_graphbuild
-        
-        col = layout.column()
-        col.label(text="Paths", icon='FILE_TICK')
-        col.prop(props, "filepath")
-        col.prop(props, "animation_folder")
-        
-        col = layout.column()
-        col.label(text="Graphs", icon='GRAPH')
-        row = layout.row()
-        row.prop(props, "plot_mode", expand=True)
-        
-        if props.plot_mode == 'MPL':
-            col = layout.column()
-            col.prop(props, "linewidth")
-            col.prop(props, "graph_color")
-            
-            row = layout.row()
-            row.operator("blenderspicy.build_graph")
-            row.separator()
-            
-        
-        # List of graphs with delete buttons
-        items = props.graphs
-        for i, item in enumerate(items):
-            row = layout.row()
-            row.alignment = "RIGHT"
-            row.label(text=item.name)
-            row.operator("blenderspicy.delete_item", icon='TRASH', text='', emboss=False).index = i
-            row.separator()

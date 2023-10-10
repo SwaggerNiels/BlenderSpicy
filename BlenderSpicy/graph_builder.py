@@ -1,24 +1,19 @@
 import bpy
 import numpy as np
-import pickle
 import matplotlib.pyplot as plt
 import os
-from mathutils import Matrix, Vector
+from mathutils import Matrix #for shifting origin of graphs
 
 from .utils import ShowMessageBox as out
-from .neuron_builder import BlenderSection
+from .utils import load_sections_dicts
 import shutil
 
-## ------------------------------ Blender Graph container -----------------------------------
+## ------------------------------ Section Graph container -----------------------------------
 
-class BlenderGraph():
+class SectionGraph():
     '''
-        Container class for storing a graph object
+        Container class for storing a graph object from the data in in BlenderSection
     '''
-    def load_sections_dicts(self):
-        ''' Load the dictionary of Sections data (exported from neuron) into the sections_dicts attribute'''
-        with open(self.filepath, "rb") as f:
-            self.sections_dicts = pickle.load(f)
     
     def __init__(self,
                  filepath,
@@ -28,22 +23,21 @@ class BlenderGraph():
         self.animation_folder = animation_folder
         self.mat = None
         
-        self.load_sections_dicts() # Loading sections dictionary
+        self.data_from = 'voltage_array'
+        # self.sections_dicts = load_sections_dicts(self.filepath) # Loading sections dictionary
 
-        self.parent_segment = bpy.context.selected_objects[0].name
-        self.name = f'graph_{self.parent_segment}'
-        print(self.name)
-        print(self.parent_segment)
-        self.build_graph()
-        self.create_curve_to_segment()
-    
-    def create_curve_to_segment(self):
-        ''' Create a bezier curve from the graph to the NEURON segment'''
-
-        print("Creating curve to segment")
-        graph_obj,segment_obj = [bpy.data.objects[self.name], bpy.data.objects[self.parent_segment]]
+        self.parent_section = bpy.context.selected_objects[0]
+        self.name = f'graph_{self.parent_section.name}'
         
-        name = f'bezier_{self.parent_segment}'
+        self.ob = None
+        self.build_graph() #sets self.ob
+        self.create_curve_to_section()
+    
+    def create_curve_to_section(self):  
+        ''' Create a bezier curve from the graph to the NEURON section'''
+
+        print("Creating curve to section")        
+        name = f'bezier_{self.parent_section.name}'
 
         curve = bpy.data.curves.new('curve_' + name, 'CURVE')
         spline = curve.splines.new('BEZIER')
@@ -51,27 +45,27 @@ class BlenderGraph():
 
         spline.bezier_points.add(1)
 
-        empty_loc = segment_obj.parent.location
+        empty_loc = self.parent_section.parent.location
         
-        #hook to furthest edge of segment
+        #hook to furthest edge of section
         i=0
         p = spline.bezier_points[i]
-        vi = np.argmax([(v.co - empty_loc).length for v in segment_obj.data.vertices])
-        p.co = segment_obj.data.vertices[vi].co
+        vi = np.argmax([(v.co - empty_loc).length for v in self.parent_section.data.vertices])
+        p.co = self.parent_section.data.vertices[vi].co
         p.handle_right_type = 'AUTO'
         p.handle_left_type = 'AUTO'
-        h = obj.modifiers.new(segment_obj.name, 'HOOK')
-        h.object = segment_obj
+        h = obj.modifiers.new(self.parent_section.name, 'HOOK')
+        h.object = self.parent_section
         h.vertex_indices_set([a + i*3 for a in range(3)])
         
         #hook to graph origin
         i=1
         p = spline.bezier_points[i]
-        p.co = graph_obj.location
+        p.co = self.ob.location
         p.handle_right_type = 'AUTO'
         p.handle_left_type = 'AUTO'
-        h = obj.modifiers.new(graph_obj.name, 'HOOK')
-        h.object = graph_obj
+        h = obj.modifiers.new(self.ob.name, 'HOOK')
+        h.object = self.ob
         h.vertex_indices_set([a + i*3 for a in range(3)])
         
         obj.data.bevel_depth = 0.02
@@ -92,23 +86,49 @@ class BlenderGraph():
         # Link the material to the active object (assuming you have an active object)
         obj.active_material = bpy.data.materials[sg_mat]
     
-    def build_graph(self):
-        segment_type,segment_id = self.parent_segment.split('_')
-        segment_id = int(segment_id)
-
-        filtered_data = [entry for entry in self.sections_dicts if 
-                        entry['type'] == segment_type and 
-                        entry['ID'] == segment_id]
+    def _load_voltage_data(self):
         
-        data = filtered_data[0]['Voltage']
-        voltage_data = np.array([np.mean(data[vals]) for vals in data])
+        if self.data_from == 'sections dict':
+            section_type,section_id = self.parent_section.name.split('_')
+            section_id = int(section_id)
+
+            filtered_data = [entry for entry in self.sections_dicts if 
+                            entry['type'] == section_type and 
+                            entry['ID'] == section_id]
+            
+            data = filtered_data[0]['Voltage']
+            voltage_data = np.array([np.mean(data[vals]) for vals in data])
+            
+            
+        elif self.data_from == 'parent section by frame':
+            #extract data from parent_section for every frame and take mean
+            voltage_data = []
+            current_frame = bpy.context.scene.frame_current
+            bpy.context.scene.render.use_lock_interface = True # This is to ensure render doesn't crash
+            for f in range(bpy.context.scene.frame_end):
+                bpy.context.scene.frame_set(f)
+                
+                voltage = self.parent_section.data.attributes['Voltage']
+                n = len(voltage.data)
+                vals = [0.] * n
+                voltage.data.foreach_get("value", vals)
+                
+                voltage_data.append(np.mean(vals))
+            bpy.context.scene.frame_set(current_frame)
+            
+        #### Probably the best method ####
+        elif self.data_from == 'voltage_array':
+            voltage_data = self.parent_section.parent['voltage_array'][self.parent_section['ID']]
+        
+        return(voltage_data)
+    
+    def build_graph(self):
+        voltage_data = self.load_voltage_data()
         
         if bpy.context.scene.blenderspicy_graphbuild.plot_mode == 'MPL':
-            graph = self._build_MPL_graph(voltage_data,
+            self.ob = self._build_MPL_graph(voltage_data,
                                          self.animation_folder,
-                                         self.parent_segment)
-        
-        return(graph)
+                                         self.parent_section.name)
 
     def _build_MPL_graph(self,
                          data, 
@@ -144,6 +164,8 @@ class BlenderGraph():
         mat.node_tree.nodes["Image Texture"].interpolation = 'Closest'
         mat.node_tree.links.remove(mat.node_tree.nodes["Image Texture"].outputs[0].links[0])
         mat.node_tree.nodes["Principled BSDF"].inputs[0].default_value = bpy.context.scene.blenderspicy_graphbuild.graph_color
+        
+        return(graph)
     
     def _check_data_dimensionality(self,):
         pass
@@ -194,9 +216,7 @@ class BlenderGraph():
         else:
             print('Graph animation already generated')
             pass
-    
-
-class BlenderNativeGraph():
+ 
     def make_spline():
         x = np.linspace(-5,5,100)
         y = np.sin(x*2)
@@ -285,7 +305,7 @@ def update_graph_color(self, context):
         mat = bpy.data.materials['anim_' + graph.name]
         mat.node_tree.nodes["Principled BSDF"].inputs[0].default_value = self.graph_color
     
-    #change all segment-graph curves colors
+    #change all section-graph curves colors
     sg_mat = 'Segment-Graph_curves_material'
     if sg_mat in bpy.data.materials:
         bpy.data.materials[sg_mat].node_tree.nodes["Principled BSDF"].inputs[0].default_value = self.graph_color
@@ -345,13 +365,18 @@ class GraphBuilderProps(bpy.types.PropertyGroup):
         update=update_graph_color,
     )
 
+    voltage_array : bpy.props.CollectionProperty(
+        type=bpy.types.PropertyGroup,
+        name="Voltage array"
+    )
+
 class BLENDERSPICY_OT_GraphBuilder(bpy.types.Operator):
     '''
-       Operator to load the NEURON voltage data from specific segment and create graph
+       Operator to load the NEURON voltage data from specific section and create graph
     '''
     
     bl_idname = 'blenderspicy.build_graph'
-    bl_label =  'Build a graph'
+    bl_label =  'Build a graph from section'
     
     def execute(self, context):
 
@@ -361,18 +386,18 @@ class BLENDERSPICY_OT_GraphBuilder(bpy.types.Operator):
             (not hasattr(bpy.context.selected_objects[0], "parent")) or 
             (not hasattr(bpy.context.selected_objects[0].parent, "name")) or 
             (not bpy.context.selected_objects[0].parent.name.startswith('NEURON'))):
-            out('Please select a NEURON segment before building a graph.')
+            out('Please select a NEURON section before building a graph.')
             return {"FINISHED"}
             
 
-        bgraph = BlenderGraph(
+        bgraph = SectionGraph(
             filepath=props.filepath,
             animation_folder=props.animation_folder,
             )
         
         items = props.graphs
         item = items.add()
-        item.name = bgraph.parent_segment
+        item.name = bgraph.parent_section.name
 
         print("Built a graph from {}".format(props.filepath))
         print("Saved images in {}".format(props.animation_folder))
@@ -389,7 +414,7 @@ class BLENDERSPICY_OT_GraphRemove(bpy.types.Operator):
 
         items = props.graphs
         
-        #remove object and its segment curve
+        #remove object and its section curve
         try:
             bpy.ops.object.select_all(action='DESELECT')
             bpy.data.objects["graph_" + items[self.index].name].select_set(True)

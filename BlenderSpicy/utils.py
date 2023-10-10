@@ -1,6 +1,13 @@
 import bpy
 import numpy as np
+import pickle
 from scipy.interpolate import interp1d
+
+def load_sections_dicts(path):
+        ''' Load the dictionary of Sections data (exported from neuron) into the sections_dicts attribute'''
+        with open(path, "rb") as f:
+            sections_dicts = pickle.load(f)
+        return(sections_dicts)
 
 def linear_interpolation(source_data, n_points):
     '''

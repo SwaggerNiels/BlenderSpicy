@@ -1,7 +1,8 @@
 import bpy
 import numpy as np
-import pickle
-from .utils import linear_interpolation
+from .utils import linear_interpolation, load_sections_dicts
+
+## ------------------------------ Blender Neuron Segment container ---------------------------
 
 class BlenderSection():
     '''
@@ -16,8 +17,7 @@ class BlenderSection():
             padded_data = np.pad(data, ((1,1)), mode="edge")
             return np.array([[i]*(self.mesh_Npoints//Nseg) for i in padded_data]).reshape(-1)
         return np.array([[i]*(self.mesh_Npoints//self.Nseg) for i in data]).reshape(-1)
-
-               
+         
     def __init__(self, X, Y, Z, DIAM,
                 branch_ID, type,
                 parent_ob=None, 
@@ -103,7 +103,6 @@ class BlenderSection():
         else:
             self.build_curves(resolution_u,bevel_depth)
 
-
     def convert_to_mesh(self):
         ''' Convert Bezier curves to mesh'''
         if self.type=="soma" and self.simplify_soma: # No need to a simplified soma, which is already a mesh
@@ -149,19 +148,12 @@ class BlenderSection():
         '''Sets section ID as a custom property of the object to be saved in .blend file'''
         self.ob["ID"] = self.ID
 
-
 ## ------------------------------ Blender Neuron container -----------------------------------
 
 class BlenderNeuron():
     '''
         Container class for storing a generated a neuron object and metadata
     '''
-
-    def load_sections_dicts(self):
-        ''' Load the dictionary of Sections data (exported from neuron) into the sections_dicts attribute'''
-        with open(self.filepath, "rb") as f:
-            self.sections_dicts = pickle.load(f)
-
     def __init__(self, 
                 filepath,
                 name="NEURON",
@@ -188,7 +180,14 @@ class BlenderNeuron():
         self.ALL_SECTIONS = []
 
 
-        self.load_sections_dicts() # Loading sections dictionary
+        self.sections_dicts = load_sections_dicts(self.filepath) # Loading sections dictionary
+        self.voltage_array = []
+        for i in range(len(self.sections_dicts)):
+            data = self.sections_dicts[i]["Voltage"]
+            branch_voltage_array = np.array( [np.mean(data[f]) for f in range(len(data))] )
+            self.voltage_array.append(branch_voltage_array)
+        
+        # self.array_name = "Voltage array" # Name of the custom attribute
 
         if parent_ob is None:
             self.create_parent_empty()
@@ -212,7 +211,15 @@ class BlenderNeuron():
 
     def set_parent_metadata(self):
         ''' Store metadata in a custom properties of the parent EMPTY object '''
-        attrs_to_save = ["filepath", "center_at_origin", "with_caps", "simplify_soma", "segmentation", "DOWNSCALE_FACTOR", "branch_base_thickness", "branch_thickness_homogeneity"]
+        attrs_to_save = ["filepath", 
+                         "center_at_origin", 
+                         "with_caps", 
+                         "simplify_soma", 
+                         "segmentation", 
+                         "DOWNSCALE_FACTOR",
+                         "branch_base_thickness",
+                         "branch_thickness_homogeneity",
+                         "voltage_array"]
         for attr in attrs_to_save:
             self.parent_ob[attr] = getattr(self, attr)
 
@@ -224,7 +231,20 @@ class BlenderNeuron():
         self.parent_ob = bpy.context.selected_objects[0]
         self.parent_ob.name = self.name
 
+    def set_section_voltage_array(self):
+        #first make an array of all the mean section voltage values
+        self.parent_ob.data.attributes.new(name=self.array_name,  type="FLOAT2", domain="POINT")
+        voltage_array = self.parent_ob.data.attributes[self.array_name] # Getting Vertex attribute
+        
+        for i in range(len(self.sections_dicts)):
+            data = self.sections_dicts[i]["Voltage"]
+            branch_voltage_array = np.array( [np.mean(data[f]) for f in range(len(data))] )
+            
+            for j,v in enumerate(branch_voltage_array):
+                voltage_array.data[i][j].value = v
+        
     def get_voltage_data(self,branch_ID, frame):
+        #return data for section material animation 
         return self.sections_dicts[branch_ID]["Voltage"][frame]
 
     def get_branch_coordinates(self,branch_ID):
@@ -276,7 +296,7 @@ class BlenderNeuron():
         bpy.app.handlers.frame_change_post.append(self.voltage_handler)
         bpy.context.scene.render.use_lock_interface = True # This is to ensure render doesn't crash
 
-    def remove_voltage_handlder(self):
+    def remove_voltage_handler(self):
         raise NotImplementedError
     
     def reinstantiate_sections_from_childen(self):
@@ -362,19 +382,22 @@ class BLENDERSPICY_OT_NeuronBuilder(bpy.types.Operator):
     def execute(self, context):
 
         props = context.scene.blenderspicy_neuronbuild
+        graphprops = context.scene.blenderspicy_graphbuild
 
-
-        neuron = BlenderNeuron(filepath=props.filepath, 
-                                with_caps=props.with_caps,
-                                center_at_origin = props.center_at_origin,
-                                simplify_soma=props.simplify_soma,
-                                segmentation = props.segmentation,
-                                DOWNSCALE_FACTOR=props.downscale_factor,
-                                branch_base_thickness=props.branch_base_thickness,
-                                branch_thickness_homogeneity=props.branch_thickness_homogeneity
-                                )
+        neuron = BlenderNeuron(
+            filepath=props.filepath, 
+            with_caps=props.with_caps,
+            center_at_origin = props.center_at_origin,
+            simplify_soma=props.simplify_soma,
+            segmentation = props.segmentation,
+            DOWNSCALE_FACTOR=props.downscale_factor,
+            branch_base_thickness=props.branch_base_thickness,
+            branch_thickness_homogeneity=props.branch_thickness_homogeneity
+            )
+        
         neuron.build_branches()
         neuron.add_voltage_handler()
+        # neuron.set_section_voltage_array()
 
         if props.center_at_origin:
             neuron.parent_ob.location[0]=0

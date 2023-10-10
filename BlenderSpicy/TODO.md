@@ -1,8 +1,8 @@
-- Make button for each folder with animation images, such that it can be removed by one click
+- Refactor code
 - Add manual y-lim
-- Make sure the graph is oriented Z up
-- Make sure the graph is located near the segment with its origin bottom-left
-- Make a Benzier curve that is hooked to both the segment center and the graph origin
+- Have a voltage and time scale bar
 - Make the Benzier optional and variable size
 - Give each of the textures a colormapper (automatic with seaborn colormap)
-- 
+- Add a camera lock option
+
+- Add native graphs
