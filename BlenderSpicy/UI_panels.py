@@ -45,27 +45,31 @@ class BLENDERSPICY_PT_GraphBuilder(bpy.types.Panel):
         props = context.scene.blenderspicy_graphbuild
         
         col = layout.column()
-        col.label(text="Paths", icon='FILE_TICK')
-        col.prop(props, "filepath")
-        col.prop(props, "animation_folder")
+        # col.label(text="Paths", icon='FILE_TICK')
+        # col.prop(props, "filepath")
         
         col = layout.column()
         col.label(text="Graphs", icon='GRAPH')
+        
+        #Mode specific UI (matplotlib textures or Blender native)
         row = layout.row()
         row.prop(props, "plot_mode", expand=True)
         
-        #Mode specific UI (matplotlib textures or Blender native)
+        top_box = layout.box()
+        top_box.label(text="properties")
+
+        # Create an inset for the lower section
         if props.plot_mode == 'MPL':
-            col = layout.column()
-            col.prop(props, "linewidth")
-            col.prop(props, "graph_color")
+            top_box.prop(props, "animation_folder")
+        elif props.plot_mode == 'Native':
+            top_box.prop(props, "animate")
+            top_box.prop(props, "line_width")
+        
+        top_box.prop(props, "graph_color")
             
-            row = layout.row()
-            row.operator("blenderspicy.build_graph")
-            row.separator()
-            
-        elif props.plot_mode == 'NATIVE':
-            pass
+        row = layout.row()
+        row.operator("blenderspicy.build_graph")
+        row.separator()
         
         # List of generated graphs with delete buttons
         items = props.graphs

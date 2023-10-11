@@ -3,11 +3,41 @@ import numpy as np
 import pickle
 from scipy.interpolate import interp1d
 
+def _get_make_node_material(mat_name):
+    if mat_name in bpy.data.materials:
+        mat = bpy.data.materials[mat_name]
+        mat.use_nodes = True
+    else:
+        mat = bpy.data.materials.new(mat_name)
+        mat.use_nodes = True
+    return (mat)
+
+def set_material_to_object(obj_name, mat_name):
+    '''
+        Quick material set to object and return both (obj,mat)
+    '''
+    mat = _get_make_node_material(mat_name)
+    
+    obj = bpy.data.objects[obj_name]
+    if mat_name not in obj.data.materials:
+        obj.data.materials.append(mat)
+    
+    return (obj,mat)
+
+def set_material_color(mat_name, color_vector):
+    '''
+        Quick material set to color and return mat
+    '''
+    mat = _get_make_node_material(mat_name)
+    mat.node_tree.nodes["Principled BSDF"].inputs[0].default_value = color_vector
+    
+    return (mat)
+
 def load_sections_dicts(path):
-        ''' Load the dictionary of Sections data (exported from neuron) into the sections_dicts attribute'''
-        with open(path, "rb") as f:
-            sections_dicts = pickle.load(f)
-        return(sections_dicts)
+    ''' Load the dictionary of Sections data (exported from neuron) into the sections_dicts attribute'''
+    with open(path, "rb") as f:
+        sections_dicts = pickle.load(f)
+    return(sections_dicts)
 
 def linear_interpolation(source_data, n_points):
     '''

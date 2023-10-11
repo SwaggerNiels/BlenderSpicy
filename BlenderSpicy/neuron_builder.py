@@ -232,6 +232,7 @@ class BlenderNeuron():
         self.parent_ob.name = self.name
 
     def set_section_voltage_array(self):
+        return NotImplementedError
         #first make an array of all the mean section voltage values
         self.parent_ob.data.attributes.new(name=self.array_name,  type="FLOAT2", domain="POINT")
         voltage_array = self.parent_ob.data.attributes[self.array_name] # Getting Vertex attribute
