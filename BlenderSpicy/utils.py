@@ -52,7 +52,25 @@ def linear_interpolation(source_data, n_points):
     output= interF(output_prop)
     
     return output
-
+    
+def remove_curve(obj_name):
+    objs = bpy.data.objects
+    
+    mat_name = 'mat_' + obj_name
+    curve_name = 'curve_' + obj_name
+    
+    print(objs)
+    print(obj_name)
+    for child in objs[obj_name].children:
+        remove_curve(child.name)
+    
+    objs.remove(objs[obj_name], do_unlink=True)
+    
+    if objs.data.curves.get(curve_name) != None:
+        objs.data.curves.remove(objs.data.curves.get(curve_name))
+    
+    if mat_name in bpy.data.materials:
+        objs.data.materials.remove(objs.data.curves.get(mat_name))
 
 def ShowMessageBox(message = "", title = "Message Box", icon = 'INFO'):
     '''

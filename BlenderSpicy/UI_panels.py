@@ -55,20 +55,33 @@ class BLENDERSPICY_PT_GraphBuilder(bpy.types.Panel):
         row = layout.row()
         row.prop(props, "plot_mode", expand=True)
         
-        top_box = layout.box()
-        top_box.label(text="properties")
+        box = layout.box()
+        box.label(text="properties")
 
         # Create an inset for the lower section
         if props.plot_mode == 'MPL':
-            top_box.prop(props, "animation_folder")
+            box.prop(props, "animation_folder")
         elif props.plot_mode == 'Native':
-            top_box.prop(props, "animate")
-            top_box.prop(props, "line_width")
-        
-        top_box.prop(props, "graph_color")
+            box.prop(props, "animate")
             
-        row = layout.row()
-        row.operator("blenderspicy.build_graph")
+        row = box.row(align=True)
+        row.prop(props, "line_width")
+        row.prop(props, "graph_color")
+        
+        row = box.row(align=True)
+        row.prop(props, "vt_bars_option")
+        row.prop(props, "t_bar_magnitude")
+        row.prop(props, "v_bar_magnitude")
+        
+        row = box.row(align=True)
+        row.prop(props, "t_scalar")
+        row.prop(props, "v_scalar")
+            
+        row = layout.row(align=True)
+        row.scale_x = 1
+        row.scale_y = 1.2
+        row.alignment = 'CENTER'
+        row.operator("blenderspicy.build_graph", icon='IMAGE_PLANE')
         row.separator()
         
         # List of generated graphs with delete buttons

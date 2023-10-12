@@ -6,7 +6,10 @@ from mathutils import Matrix #for shifting origin of graphs
 
 from .utils import ShowMessageBox as out
 from .utils import set_material_to_object, set_material_color
+from .utils import remove_curve
 import shutil
+
+SCALE = (.01, 1)
 
 ## ------------------------------ Section Graph container -----------------------------------
 
@@ -23,6 +26,9 @@ class SectionGraph():
         self.animation_folder = animation_folder
         self.mat = None
         
+        self.SCALE = SCALE
+        self.CREATE_ON_SECTION_TIP = True
+        
         self.data_from = 'voltage_array'
         # self.sections_dicts = load_sections_dicts(self.filepath) # Loading sections dictionary
 
@@ -33,6 +39,12 @@ class SectionGraph():
         self.plot_type = None
         self.build_graph() #sets self.ob
         self.create_curve_to_section()
+        
+        # move object to tip of segment
+        if self.CREATE_ON_SECTION_TIP:
+            empty_loc = self.parent_section.parent.location
+            vi = np.argmax([(v.co - empty_loc).length for v in self.parent_section.data.vertices])
+            self.ob.location = self.parent_section.data.vertices[vi].co
     
     def create_curve_to_section(self):  
         ''' Create a bezier curve from the graph to the NEURON section: sg object'''
@@ -74,14 +86,13 @@ class SectionGraph():
         
         #make material for curve if needed and assign it
         sg_name = 'sg_' + self.parent_section.name
-        sg_mat_name = 'sg_mat_' + self.parent_section.name
+        mat_sg_name = 'mat_sg_' + self.parent_section.name
         
         # set the material for the graph object and change the color
         color = bpy.context.scene.blenderspicy_graphbuild.graph_color
-        sg_mat,_ = set_material_to_object(sg_name, sg_mat_name)
-        set_material_color(sg_mat_name, color)
-        
-    
+        mat_sg,_ = set_material_to_object(sg_name, mat_sg_name)
+        set_material_color(mat_sg_name, color)
+         
     def _load_voltage_data(self):
         
         if self.data_from == 'sections dict':
@@ -120,19 +131,19 @@ class SectionGraph():
     
     def build_graph(self):
         voltage_data = self._load_voltage_data()
-        plot_type = bpy.context.scene.blenderspicy_graphbuild.plot_mode
+        plot_mode = bpy.context.scene.blenderspicy_graphbuild.plot_mode
         animate = bpy.context.scene.blenderspicy_graphbuild.animate
         
-        self.plot_type = plot_type
+        self.plot_mode = plot_mode
         
-        if   plot_type == 'MPL':
+        if   plot_mode == 'MPL':
             self.ob = self._build_MPL_graph(
                 voltage_data,
                 self.animation_folder,
                 self.parent_section.name
                 )
             
-        elif plot_type == 'Native':
+        elif plot_mode == 'Native':
             if not animate:
                 self.ob = self._native_line(
                     voltage_data,
@@ -143,6 +154,10 @@ class SectionGraph():
                     voltage_data,
                     'animate',
                 )
+            
+        self.ob['plot_mode'] = plot_mode
+        bpy.ops.object.select_all(action='DESELECT')
+        self.ob.select_set(True)
 
     def _build_MPL_graph(self,
                          data, 
@@ -230,36 +245,20 @@ class SectionGraph():
         else:
             print('Graph animation already generated')
             pass
- 
-    def make_spline(self):
-        x = np.linspace(-5,5,100)
-        y = np.sin(x*2)
-
-        xt = np.meshgrid(np.linspace(-5,5,100),np.linspace(0,3,4))
-        xt = xt[0]+xt[1]
-        yt = np.sin(2*(xt))
-
-        points = list(zip(x,y))
-        points_t = np.array([ [(xi,yi) for xi,yi in zip(xyt[0],xyt[1])] for xyt in zip(xt,yt)])
-            
-        #plot_2D_line(points, name = '2D_line')
-        print(points_t)
-        plot_2Dt_line(points_t, name = '2Dt_line')
-        #plot_2D_scatter(points, name = '2D_scatter')
     
-    def _native_line(self, data, plot_type='static', name="object_name", z=0, scale=(.01, 1)):
+    def _native_line(self, data, plot_type='static', name="object_name", z=0):
         '''
             Creates a curve as a line plot from the input data
         '''
         name = self.name
+        props = bpy.context.scene.blenderspicy_graphbuild
         
-        xs = np.array( list(range(len(data))) ) * scale[0]
+        xs = np.array( list(range(len(data))) ) * self.SCALE[0] * props.t_scalar
         
         ymin = bpy.context.scene.blenderspicy_materials.min_value
         ymax = bpy.context.scene.blenderspicy_materials.max_value
         ys = np.clip(data,ymin,ymax)
-        ys = (np.array(ys)-np.min(ys)) * scale[1]
-        
+        ys = (np.array(ys)-np.min(ys)) * self.SCALE[1] * props.v_scalar
         
         data = zip(xs,ys)
         
@@ -269,19 +268,16 @@ class SectionGraph():
         elif plot_type == 'animate':
             obj = self._plot_line_animate(data, name, z)
             
-        
-        obj.data.bevel_depth = .02
+        obj.data.bevel_depth = props.line_width
         obj.data.use_fill_caps = True
         
         graph_name = self.name
         mat_name = 'mat_' + self.parent_section.name
         
         # set the material for the graph object and change the color
-        color = bpy.context.scene.blenderspicy_graphbuild.graph_color
+        color = props.graph_color
         mat,_ = set_material_to_object(graph_name, mat_name)
         set_material_color(mat_name, color)
-        
-        obj['plot_type'] = plot_type
         
         return(obj)
     
@@ -289,7 +285,7 @@ class SectionGraph():
         points = [[x,y,z] for (x,y) in data]
         
         # make a new curve with a new spline
-        curve = bpy.data.curves.new('curve', 'CURVE')
+        curve = bpy.data.curves.new('curve_' + self.name, 'CURVE')
         curve.dimensions = '3D'
         spline = curve.splines.new(type='POLY')
         spline.points.add(len(points)-1) # theres already one point by default
@@ -313,19 +309,19 @@ class SectionGraph():
         
         curve,spline = self._curve_spline_line(data,z)
                 
-        for f,point in enumerate(spline.points):
-            point.radius = 0
-            point.keyframe_insert(data_path="radius", frame = f)
-            point.radius = 1
-            point.keyframe_insert(data_path="radius", frame = f+1)
-
-        # # make a new object with the curve
+        # make a new object with the curve
         obj = bpy.data.objects.new(name, curve)
         bpy.context.scene.collection.objects.link(obj)
+
+        obj.data.bevel_factor_end = 0
+        obj.data.keyframe_insert(data_path="bevel_factor_end", frame = 1)
+        obj.data.bevel_factor_end = 1
+        number_of_points = len(obj.data.splines[0].points)
+        obj.data.keyframe_insert(data_path="bevel_factor_end", frame = number_of_points)
         
         return(obj)
         
-    def _plot_2Dt_line(points_2Dt, name="object_name", Z=0):
+    def _plot_2Dt_line(points_2Dt, name="object_name", z=0):
         return NotImplementedError
         
         points_3Dt = [[[point[0],point[1],Z] for point in points_2D] for points_2D in points_2Dt]
@@ -354,7 +350,7 @@ class SectionGraph():
         obj.data.use_fill_caps = True
         bpy.context.scene.collection.objects.link(obj)
         
-    def plot_2Dscatter(points_2D, name="object_name", Z=0):
+    def plot_2Dscatter(points_2D, name="object_name", z=0):
         points_3D = [[point[0],point[1],Z] for point in points_2D]
         
         ico = bpy.data.meshes.new('ICOSPHERE')
@@ -366,14 +362,140 @@ class SectionGraph():
             bpy.context.scene.collection.objects.link(obj)
 
 # Callback functions
-def update_line_width(self, context):
-    '''This function will be called when the line'''
-    props = context.scene.blenderspicy_graphbuild
-    section_graphs = props.graphs
+def update_native_graph(property: str, value: str):
     
-    for section_graph in section_graphs:
-        obj = bpy.data.objects['graph_' + section_graph.name]
-        obj.data.bevel_depth = props.line_width
+    def func(self, context):
+        props = context.scene.blenderspicy_graphbuild
+        for graph in props.graphs:
+            obj = bpy.data.objects['graph_' + graph.name]
+            setattr(obj.data, property, getattr(props, value))
+            
+    return(func)
+
+def update_sg_curve(property: str, value: str):
+    
+    def func(self, context):
+        props = context.scene.blenderspicy_graphbuild
+        for graph in props.graphs:
+            obj = bpy.data.objects['curve_' + graph.name]
+            setattr(obj.data, property, getattr(props, value))
+            
+    return(func)
+
+def update_line_width(self, context):
+    update_graphs = update_native_graph('bevel_depth','line_width')
+    update_graphs(self,context)
+    
+    update_vt_bars(self, context)
+
+def update_scale(self,context):
+    props = context.scene.blenderspicy_graphbuild
+    
+    xp = props.prev_t_scalar
+    yp = props.prev_v_scalar
+    
+    x = props.t_scalar
+    y = props.v_scalar
+    
+    matrixp = Matrix.Scale(1/xp, 4, (1.0, 0.0, 0.0)) @ Matrix.Scale(1/yp, 4, (0.0, 1.0, 0.0))
+    matrix  = Matrix.Scale(x   , 4, (1.0, 0.0, 0.0)) @ Matrix.Scale(y   , 4, (0.0, 1.0, 0.0))
+    
+    props.prev_t_scalar = x
+    props.prev_v_scalar = y
+    
+    for graph in props.graphs:
+        obj = bpy.data.curves['curve_graph_' + graph.name]
+        obj.transform(matrixp)
+        obj.transform(matrix)
+        
+        for p in obj.splines[0].points:
+            p.radius = 1
+    
+    if props.vt_bars_option:
+        update_vt_bars(self,context)
+
+def update_vt_bars_option(self, context):
+    voltage_bar_name = 'voltage_scale_bar'
+    time_bar_name = 'time_scale_bar'
+    props = context.scene.blenderspicy_graphbuild
+    
+    bpy.ops.object.select_all(action='DESELECT')    
+    if self.vt_bars_option:
+        #add scale bars
+        for bar in [voltage_bar_name,time_bar_name]:
+            curve = bpy.data.curves.new('curve_' + bar, 'CURVE')
+            spline = curve.splines.new('BEZIER')
+            obj = bpy.data.objects.new(bar, curve)
+            
+            text_curve = bpy.data.curves.new(type="FONT", name="text_curve_" + bar)
+            obj.data.bevel_depth = props.line_width*2
+            
+            x1,y1 = (0,0)
+            
+            if bar == voltage_bar_name:
+                x2,y2 = (0,props.v_bar_magnitude*SCALE[1]*props.v_scalar)
+                
+                text_curve.body = f"{props.v_bar_magnitude} mV"
+                text_curve.align_x = 'RIGHT'
+                text_curve.align_y = 'CENTER'
+                text_curve.offset_x = -props.line_width*2
+                text_curve.offset_y = y2/2
+            
+            elif bar == time_bar_name:
+                x2,y2 = (props.t_bar_magnitude*SCALE[0]*props.t_scalar,0)
+                
+                text_curve.body = f"{props.t_bar_magnitude} ms"
+                text_curve.align_x = 'CENTER'
+                text_curve.align_y = 'TOP'
+                text_curve.offset_x = x2/2-.5
+                text_curve.offset_y = -props.line_width*2
+                
+            spline.bezier_points.add(1)
+            spline.bezier_points[0].co = (x1,y1, 0)
+            spline.bezier_points[1].co = (x2,y2, 0)
+            
+            bpy.context.scene.collection.objects.link(obj)
+            obj.select_set(True)
+            
+            text_obj = bpy.data.objects.new(name='text_' + bar, object_data=text_curve)
+            bpy.context.scene.collection.objects.link(text_obj)
+            text_obj.parent = obj
+            text_obj.select_set(True)
+            
+    elif not self.vt_bars_option:
+        #destroy scale bars
+        remove_curve(voltage_bar_name)
+        remove_curve(time_bar_name)
+
+def update_object_data(obj_name: str, property: str, value: str, callback=None):
+    func = None
+    
+    if callback!=None:
+        if not callable(callback):
+            raise ValueError("func2 must be a callable function")
+        
+        def func(self, context):
+            props = context.scene.blenderspicy_graphbuild
+            prop = getattr(props, property)
+            obj = bpy.data.objects[obj_name]
+            setattr(obj.data, prop, getattr(prop, value))
+        
+        callback()
+    else:
+        
+        def func(self, context):
+            props = context.scene.blenderspicy_graphbuild
+            prop = getattr(props, property)
+            obj = bpy.data.objects[obj_name]
+            setattr(obj.data, prop, getattr(prop, value))
+        
+    return(func)
+
+def update_vt_bars(self, context):
+    props = context.scene.blenderspicy_graphbuild
+    
+    props.vt_bars_option = False
+    props.vt_bars_option = True
 
 def update_graph_color(self, context):
     '''This function will be called when the graph_color property changes'''
@@ -384,15 +506,15 @@ def update_graph_color(self, context):
     for graph in props.graphs:
         # set the material for the graph object and change the color
         graph_name = 'graph_' + graph.name
-        sg_name = 'sg_' + graph.name
+        mat_name = 'mat_' + graph.name
         mat,_ = set_material_to_object(graph_name, mat_name)
-        set_material_color(mat, self.graph_color)
+        set_material_color(mat_name, self.graph_color)
         
         # set the material for the graph-section object and change the color
-        mat_name = 'mat_' + graph.name
-        sg_mat_name = 'sg_mat_' + graph.name
-        sg_mat,_ = set_material_to_object(sg_name, sg_mat_name)
-        set_material_color(sg_mat, self.graph_color)
+        sg_name = 'sg_' + graph.name
+        mat_sg_name = 'mat_sg_' + graph.name
+        mat_sg,_ = set_material_to_object(sg_name, mat_sg_name)
+        set_material_color(mat_sg_name, self.graph_color)
 
 def update_plot_mode(self, context):
     pass
@@ -422,6 +544,52 @@ class GraphBuilderProps(bpy.types.PropertyGroup):
             ('MPL', 'MPL', 'Matplotlib generated pngs in a texture'),           
         ],
         update=update_plot_mode
+    )
+    
+    sg_option : bpy.props.BoolProperty(
+        name="Section-graph curve",
+        default = True,
+        # update=update_sg_option,
+    )
+    
+    vt_bars_option : bpy.props.BoolProperty(
+        name="scale bars for Voltage and time",
+        default = False,
+        update=update_vt_bars_option,
+    )
+
+    v_bar_magnitude : bpy.props.IntProperty(
+        name="Voltage scale bar magnitude in mV",
+        default = 10,
+        update=update_vt_bars,
+    )
+    
+    t_bar_magnitude : bpy.props.IntProperty(
+        name="Time scale bar magnitude in ms",
+        default = 500,
+        update=update_vt_bars,
+    )
+ 
+    v_scalar : bpy.props.FloatProperty(
+        name="Voltage scalar",
+        default = 1,
+        update=update_scale,
+    )
+    
+    t_scalar : bpy.props.FloatProperty(
+        name="Time scalar",
+        default = 1,
+        update=update_scale,
+    )
+    
+    prev_v_scalar : bpy.props.FloatProperty(
+        name="Previous voltage scalar",
+        default = 1,
+    )
+    
+    prev_t_scalar : bpy.props.FloatProperty(
+        name="Previous time scalar",
+        default = 1,
     )
     
     animate : bpy.props.BoolProperty(
@@ -463,7 +631,7 @@ class BLENDERSPICY_OT_GraphBuilder(bpy.types.Operator):
     '''
     
     bl_idname = 'blenderspicy.build_graph'
-    bl_label =  'Build a graph from section'
+    bl_label =  'Build graph'
     
     def execute(self, context):
 
@@ -481,6 +649,8 @@ class BLENDERSPICY_OT_GraphBuilder(bpy.types.Operator):
             filepath=bpy.path.abspath(props.filepath),
             animation_folder=bpy.path.abspath(props.animation_folder),
             )
+        
+        update_scale(self,context)
         
         items = props.graphs
         item = items.add()
@@ -502,30 +672,37 @@ class BLENDERSPICY_OT_GraphRemove(bpy.types.Operator):
         items = props.graphs
         animation_folder = bpy.path.abspath(props.animation_folder)
         
-        #remove object and its section curve
         try:
-            bpy.ops.object.select_all(action='DESELECT')
-            bpy.data.objects["graph_" + items[self.index].name].select_set(True)
-            bpy.ops.object.delete() 
-            bpy.ops.object.select_all(action='DESELECT')
-            bpy.data.objects["sg_" + items[self.index].name].select_set(True)
-            bpy.ops.object.delete() 
+            plot_mode = bpy.data.objects["graph_" + items[self.index].name]['plot_mode']
         except:
-            out(f'Could not remove object: {"graph_" + items[self.index].name}')
-            
-        #remove animation folder
+            plot_mode = None
+        
+        #remove object
         try:
-            folder_path = f'{animation_folder}{items[self.index].name}'
-            shutil.rmtree(folder_path)
-            out(f'Removed: {folder_path}')
+            remove_curve("graph_" + items[self.index].name)
         except:
-            out(f'Could not remove folder: {folder_path}')
+            out(f'Could not remove object graph object')
+        
+        #remove section-graph curve
+        try:            
+            remove_curve("sg_" + items[self.index].name)
+        except:
+            out(f'Could not remove object section-graph curve')
         
         #remove from list
         try:
             items.remove(self.index)
         except:
-            out(f'Could not remove graph from list (index=): {self.index}')
+            out(f'Could not remove graph from list below')
+        
+        #remove animation folder
+        if plot_mode == 'MPL':
+            try:
+                folder_path = f'{animation_folder}{items[self.index].name}'
+                shutil.rmtree(folder_path)
+                out(f'Removed: {folder_path}')
+            except:
+                out(f'Could not remove folder: {folder_path}')
         
         return {'FINISHED'}
 
