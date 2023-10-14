@@ -58,17 +58,25 @@ def remove_curve(obj_name):
     
     mat_name = 'mat_' + obj_name
     curve_name = 'curve_' + obj_name
+    text_name = 'text_curve_' + obj_name
+    
     
     for child in objs[obj_name].children:
+        print(child)
         remove_curve(child.name)
+        print(child)
     
     objs.remove(objs[obj_name], do_unlink=True)
+    
+    if text_name in bpy.data.curves:
+        objs.data.curves.remove(objs.data.curves.get(text_name))
+    
+    if mat_name in bpy.data.materials:
+        objs.data.materials.remove(objs.data.materials.get(mat_name))
     
     if objs.data.curves.get(curve_name) != None:
         objs.data.curves.remove(objs.data.curves.get(curve_name))
     
-    if mat_name in bpy.data.materials:
-        objs.data.materials.remove(objs.data.curves.get(mat_name))
 
 def ShowMessageBox(message = "", title = "Message Box", icon = 'INFO'):
     '''

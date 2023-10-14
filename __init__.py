@@ -45,7 +45,13 @@ check_and_install_modules() # This is called before any imports from the submodu
 #graph_builder
 from .graph_builder import GraphBuilderProps
 from .graph_builder import BLENDERSPICY_OT_GraphBuilder
-from .graph_builder import BLENDERSPICY_OT_GraphRemove
+from .graph_builder import BLENDERSPICY_OT_GraphRemover
+from .graph_builder import BLENDERSPICY_OT_ScalebarBuilder
+from .graph_builder import BLENDERSPICY_OT_ScalebarRemover
+from .graph_builder import BLENDERSPICY_OT_SgcurveBuilder
+from .graph_builder import BLENDERSPICY_OT_SgcurveRemover
+from .graph_builder import BLENDERSPICY_OT_ReferenceBuilder
+from .graph_builder import BLENDERSPICY_OT_ReferenceRemover
 
 #neuron_builder
 from .neuron_builder import NeuronBuilderProps
@@ -75,11 +81,20 @@ ordered_classes = [
 
     # Operators
     BLENDERSPICY_OT_NeuronBuilder,
-    BLENDERSPICY_OT_GraphBuilder,
-    BLENDERSPICY_OT_GraphRemove,
     BLENDERSPICY_OT_HandlerRemover,
+    
+    BLENDERSPICY_OT_GraphBuilder,
+    BLENDERSPICY_OT_GraphRemover,
+    BLENDERSPICY_OT_ScalebarBuilder,
+    BLENDERSPICY_OT_ScalebarRemover,
+    BLENDERSPICY_OT_SgcurveBuilder,
+    BLENDERSPICY_OT_SgcurveRemover,
+    BLENDERSPICY_OT_ReferenceBuilder,
+    BLENDERSPICY_OT_ReferenceRemover,
+    
     BLENDERSPICY_OT_MaterialCreator,
     BLENDERSPICY_OT_RemoveMatertials,
+    
     BLENDERSPICY_OT_AnimationLoader,
     BLENDERSPICY_OT_SetupWorld,
 
@@ -109,9 +124,10 @@ def unregister():
     del bpy.types.Scene.blenderspicy_materials
 
 if __name__ == "__main__":
-    register()
-    
     #addon specific blender settings
     bpy.context.space_data.overlay.show_relationship_lines = False
+    
+    register()
+    
 
     

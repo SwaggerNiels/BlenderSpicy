@@ -44,58 +44,77 @@ class BLENDERSPICY_PT_GraphBuilder(bpy.types.Panel):
         layout = self.layout
         props = context.scene.blenderspicy_graphbuild
         
-        col = layout.column()
         # col.label(text="Paths", icon='FILE_TICK')
         # col.prop(props, "filepath")
-        
-        col = layout.column()
-        col.label(text="Graphs", icon='GRAPH')
-        
         #Mode specific UI (matplotlib textures or Blender native)
         # row = layout.row()
         # row.prop(props, "plot_mode", expand=True)
         
-        box = layout.box()
-        box.label(text="properties")
 
         # Create an inset for the lower section
-        if props.plot_mode == 'MPL':
-            box.prop(props, "animation_folder")
-        elif props.plot_mode == 'Native':
-            box.prop(props, "animate")
+        # if props.plot_mode == 'MPL':
+        #     col.prop(props, "animation_folder")
+        # elif props.plot_mode == 'Native':
+        #     col.prop(props, "animate")
             
-        row = box.row(align=True)
+        col = layout.column(align=True)
+        col.operator("blenderspicy.build_graph", icon='GRAPH')
+        row = col.row(align=True)
+        row.scale_x = 1.5
         row.prop(props, "line_width")
+        row.scale_x = .5
         row.prop(props, "graph_color")
+        col.prop(props, "t_scalar")
+        col.prop(props, "v_scalar")
         
-        row = box.row(align=True)
-        row.prop(props, "vt_bars_option")
-        row.prop(props, "t_bar_magnitude")
-        row.prop(props, "v_bar_magnitude")
-        
-        row = box.row(align=True)
-        row.prop(props, "t_scalar")
-        row.prop(props, "v_scalar")
+        col = layout.column(align=True)
+        if props.scale_bars:
+            col.operator("blenderspicy.remove_scalebar", icon='FIXED_SIZE')
+        else:
+            col.operator("blenderspicy.build_scalebar", icon='FIXED_SIZE')
+        row = col.row(align=True)
+        row.scale_x = 1.5
+        row.prop(props, "scale_width")
+        row.scale_x = .5
+        row.prop(props, "scale_color")
+        col.prop(props, "t_bar_magnitude")
+        col.prop(props, "v_bar_magnitude")
             
-        row = layout.row(align=True)
-        row.scale_x = 1
-        row.scale_y = 1.2
-        row.alignment = 'CENTER'
-        row.operator("blenderspicy.build_graph", icon='IMAGE_PLANE')
-        row.separator()
+        col = layout.column(align=True)
+        if props.ref_lines:
+            col.operator("blenderspicy.remove_reference", icon='LINENUMBERS_OFF')
+        else:
+            col.operator("blenderspicy.build_reference", icon='LINENUMBERS_OFF')
+        row = col.row(align=True)
+        row.scale_x = 1.5
+        row.prop(props, "ref_width")
+        row.scale_x = .5
+        row.prop(props, "ref_color")
+        col.prop(props, "ref_height")
+        
+        col = layout.column(align=True)
+        if props.sg_curves:
+            col.operator("blenderspicy.remove_sgcurve", icon='IPO_LINEAR')
+        else:
+            col.operator("blenderspicy.build_sgcurve", icon='IPO_LINEAR')
+        row = col.row(align=True)
+        row.scale_x = 1.5
+        row.prop(props, "sg_width")
+        row.scale_x = .5
+        row.prop(props, "sg_color")
+        col.prop(props, "sg_thick")
         
         # List of generated graphs with delete buttons
+        row = layout.row(align=True)
+        col = layout.row(align=True)
+        row.label(text="graphs made:")
         box = layout.box()
-        box.label(text="graphs made:")
+        col = box.column()
         items = props.graphs
         for i, item in enumerate(items):
-            row = box.row()
-            row.alignment = "LEFT"
+            row = col.row(align=True)
             row.label(text=item.name)
-            
-            row.alignment = "RIGHT"
             row.operator("blenderspicy.delete_item", icon='TRASH', text='', emboss=False).index = i
-            row.separator()
 
 # ----------------------- ANIMATION MANAGER UI --------------------
 
