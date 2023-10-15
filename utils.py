@@ -35,7 +35,8 @@ def set_material_color(mat_name, color_vector):
 
 def load_sections_dicts(path):
     ''' Load the dictionary of Sections data (exported from neuron) into the sections_dicts attribute'''
-    with open(path, "rb") as f:
+    # Absolute path here
+    with open(bpy.path.abspath(path), "rb") as f:
         sections_dicts = pickle.load(f)
     return(sections_dicts)
 
