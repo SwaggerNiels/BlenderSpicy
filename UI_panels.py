@@ -2,16 +2,16 @@ import bpy
 
 # ----------------------- NEURON BUILDER UI -----------------------
 
-class BLENDERSPICY_PT_NeuronBuilder(bpy.types.Panel):
+class BLENDERSPIKY_PT_NeuronBuilder(bpy.types.Panel):
     
     bl_label =  'Neuron Builder'
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
-    bl_category = "BlenderSpicy"
+    bl_category = "BlenderSpiky"
     
     def draw(self, context):
         layout = self.layout
-        props = context.scene.blenderspicy_neuronbuild
+        props = context.scene.blenderspiky_neuronbuild
         col = layout.column()
         col.prop(props, "filepath")
         col.label(text="Coordinates", icon="GRID")
@@ -29,27 +29,24 @@ class BLENDERSPICY_PT_NeuronBuilder(bpy.types.Panel):
     
 
         row = layout.row()
-        row.operator("blenderspicy.build_neuron")
+        row.operator("blenderspiky.build_neuron")
 
 # ----------------------- GRAPH MANAGER UI ------------------------
 
-class BLENDERSPICY_PT_GraphBuilder(bpy.types.Panel):
+class BLENDERSPIKY_PT_GraphBuilder(bpy.types.Panel):
     
     bl_label =  'Graph builder'
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
-    bl_category = "BlenderSpicy"
+    bl_category = "BlenderSpiky"
     
     def draw(self, context):
         layout = self.layout
-        props = context.scene.blenderspicy_graphbuild
+        props = context.scene.blenderspiky_graphbuild
         
-        # col.label(text="Paths", icon='FILE_TICK')
-        # col.prop(props, "filepath")
         #Mode specific UI (matplotlib textures or Blender native)
         # row = layout.row()
         # row.prop(props, "plot_mode", expand=True)
-        
 
         # Create an inset for the lower section
         # if props.plot_mode == 'MPL':
@@ -58,7 +55,7 @@ class BLENDERSPICY_PT_GraphBuilder(bpy.types.Panel):
         #     col.prop(props, "animate")
             
         col = layout.column(align=True)
-        col.operator("blenderspicy.build_graph", icon='GRAPH')
+        col.operator("blenderspiky.build_graph", icon='GRAPH')
         row = col.row(align=True)
         row.scale_x = 1.5
         row.prop(props, "line_width")
@@ -69,9 +66,9 @@ class BLENDERSPICY_PT_GraphBuilder(bpy.types.Panel):
         
         col = layout.column(align=True)
         if props.scale_bars:
-            col.operator("blenderspicy.remove_scalebar", icon='FIXED_SIZE')
+            col.operator("blenderspiky.remove_scalebar", icon='FIXED_SIZE')
         else:
-            col.operator("blenderspicy.build_scalebar", icon='FIXED_SIZE')
+            col.operator("blenderspiky.build_scalebar", icon='FIXED_SIZE')
         row = col.row(align=True)
         row.scale_x = 1.5
         row.prop(props, "scale_width")
@@ -82,9 +79,9 @@ class BLENDERSPICY_PT_GraphBuilder(bpy.types.Panel):
             
         col = layout.column(align=True)
         if props.ref_lines:
-            col.operator("blenderspicy.remove_reference", icon='LINENUMBERS_OFF')
+            col.operator("blenderspiky.remove_reference", icon='LINENUMBERS_OFF')
         else:
-            col.operator("blenderspicy.build_reference", icon='LINENUMBERS_OFF')
+            col.operator("blenderspiky.build_reference", icon='LINENUMBERS_OFF')
         row = col.row(align=True)
         row.scale_x = 1.5
         row.prop(props, "ref_width")
@@ -94,9 +91,9 @@ class BLENDERSPICY_PT_GraphBuilder(bpy.types.Panel):
         
         col = layout.column(align=True)
         if props.sg_curves:
-            col.operator("blenderspicy.remove_sgcurve", icon='IPO_LINEAR')
+            col.operator("blenderspiky.remove_sgcurve", icon='IPO_LINEAR')
         else:
-            col.operator("blenderspicy.build_sgcurve", icon='IPO_LINEAR')
+            col.operator("blenderspiky.build_sgcurve", icon='IPO_LINEAR')
         row = col.row(align=True)
         row.scale_x = 1.5
         row.prop(props, "sg_width")
@@ -114,37 +111,37 @@ class BLENDERSPICY_PT_GraphBuilder(bpy.types.Panel):
         for i, item in enumerate(items):
             row = col.row(align=True)
             row.label(text=item.name)
-            row.operator("blenderspicy.delete_item", icon='TRASH', text='', emboss=False).index = i
+            row.operator("blenderspiky.delete_item", icon='TRASH', text='', emboss=False).index = i
 
 # ----------------------- ANIMATION MANAGER UI --------------------
 
-class BLENDERSPICY_PT_AnimationManager(bpy.types.Panel):
+class BLENDERSPIKY_PT_AnimationManager(bpy.types.Panel):
     bl_label = 'Animation manager'
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
-    bl_category = "BlenderSpicy"
+    bl_category = "BlenderSpiky"
     
     def draw(self, context):
         layout = self.layout
         
         row = layout.row()
-        row.operator("blenderspicy.reload_animations") 
+        row.operator("blenderspiky.reload_animations") 
 
         row = layout.row()
-        row.operator("blenderspicy.remove_handlers")
+        row.operator("blenderspiky.remove_handlers")
 
 # ----------------------- SHADING UI ------------------------------
 
-class BLENDERSPICY_PT_MaterialCreator(bpy.types.Panel):
+class BLENDERSPIKY_PT_MaterialCreator(bpy.types.Panel):
     bl_label = 'Shading manager'
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
-    bl_category = "BlenderSpicy"
+    bl_category = "BlenderSpiky"
     
     def draw(self, context):
         layout = self.layout
         
-        props = context.scene.blenderspicy_materials
+        props = context.scene.blenderspiky_materials
         col = layout.column()
         col.prop(props, "min_value")
         col.prop(props, "max_value")
@@ -157,7 +154,7 @@ class BLENDERSPICY_PT_MaterialCreator(bpy.types.Panel):
 
 
         row = layout.row()
-        row.operator("blenderspicy.create_material")
+        row.operator("blenderspiky.create_material")
         col = layout.column()
-        col.operator("blenderspicy.remove_materials")
-        col.operator("blenderspicy.setup_world")
+        col.operator("blenderspiky.remove_materials")
+        col.operator("blenderspiky.setup_world")

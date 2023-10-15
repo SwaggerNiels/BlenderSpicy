@@ -62,9 +62,7 @@ def remove_curve(obj_name):
     
     
     for child in objs[obj_name].children:
-        print(child)
         remove_curve(child.name)
-        print(child)
     
     objs.remove(objs[obj_name], do_unlink=True)
     

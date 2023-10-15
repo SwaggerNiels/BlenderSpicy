@@ -1,28 +1,24 @@
 import bpy
-import numpy as np
-import pickle
-from .utils import linear_interpolation
+from .neuron_builder import BlenderNeuron
 
-from .neuron_builder import BlenderNeuron, BlenderSection
-
-class BLENDERSPICY_OT_HandlerRemover(bpy.types.Operator):   
+class BLENDERSPIKY_OT_HandlerRemover(bpy.types.Operator):   
     '''
     Operator to clear frame_change_post handers.
 
     Note: this should remove a handler linked to a selected object, but I don't know how to implement this. 
     So, as a temporary band aid, it just removes all handlers. 
     '''
-    bl_idname = 'blenderspicy.remove_handlers'
+    bl_idname = 'blenderspiky.remove_handlers'
     bl_label =  'Remove all voltage handlers'
 
     def execute(self, context):
         bpy.app.handlers.frame_change_post.clear()
         return {"FINISHED"}
     
-class BLENDERSPICY_OT_AnimationLoader(bpy.types.Operator):   
+class BLENDERSPIKY_OT_AnimationLoader(bpy.types.Operator):   
     '''Reload animation data for selected neurons''' 
 
-    bl_idname = 'blenderspicy.reload_animations'
+    bl_idname = 'blenderspiky.reload_animations'
     bl_label =  'Reload animation data'
 
     def execute(self, context):

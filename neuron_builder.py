@@ -372,18 +372,18 @@ class NeuronBuilderProps(bpy.types.PropertyGroup):
         subtype="FILE_PATH"
     )
     
-class BLENDERSPICY_OT_NeuronBuilder(bpy.types.Operator):
+class BLENDERSPIKY_OT_NeuronBuilder(bpy.types.Operator):
     '''
        Operator to load the NEURON dictionary and create the mesh
     '''
     
-    bl_idname = 'blenderspicy.build_neuron'
+    bl_idname = 'blenderspiky.build_neuron'
     bl_label =  'Build a neuron'
     
     def execute(self, context):
 
-        props = context.scene.blenderspicy_neuronbuild
-        graphprops = context.scene.blenderspicy_graphbuild
+        props = context.scene.blenderspiky_neuronbuild
+        graphprops = context.scene.blenderspiky_graphbuild
 
         neuron = BlenderNeuron(
             filepath=props.filepath, 
