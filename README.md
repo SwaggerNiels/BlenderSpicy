@@ -7,6 +7,7 @@ The graph elements are very customizable and easy in use.
 
 ## Usage
 
+
 ## Installation
 - Install Blender: https://www.blender.org/download/
 - Download the latest `BlenderSpiky.zip` from the Releases section 
