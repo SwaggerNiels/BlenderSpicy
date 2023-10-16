@@ -3,7 +3,21 @@ First of all, huge shoutout to ArtemKirsanov, he made the NEURON to Blender modu
 
 I added the **new graphing system**.
 Now you don't need to exit blender to get some great looking graphs of any NEURON section you desire. 
+<p align="center">
+  <img src="assets/Figure.png" width="500"
+    <em>Nice figures for your paper</em>
+  <img src="assets/Animation.gif" width="500"
+    <em>Nice figures for your paper</em>
+</p>
 The graph elements are very customizable and easy in use.
+<p align="center">
+  <img src="assets/props/Remove_add.gif" width="330"
+    <em>Easily create and delete graphs</em>
+  <img src="assets/props/Fast_playback.gif" width="330"
+    <em>Fast playback speed</em>
+  <img src="assets/props/Customize.gif" width="330"
+    <em>Easily customize your graphs</em>
+</p>
 
 ## Installation
 - First Install Blender: https://www.blender.org/download/
