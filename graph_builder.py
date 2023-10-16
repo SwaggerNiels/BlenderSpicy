@@ -488,7 +488,7 @@ def update_sg_curve(self, context):
         plot = bpy.data.objects['graph_' + graph.name]
         y = (props.ref_height-np.min(plot['plot_data'])) * SCALE[1] * props.v_scalar
         p = curve.splines[0].bezier_points[1]
-        # p.co[1] = plot.location[1]
+        p.co = plot.location
         p.co[1] = plot.location[1]+y
         curve.splines[0].bezier_points[1].radius = props.sg_thick
         
