@@ -12,7 +12,7 @@ Then install the addon (see video below)
 - Download the latest `BlenderSpiky.zip` from the Releases section 
 - Add the addon in Blender
 <p align="center">
-  <img src="assets/installation.mp4" width="1000"
+  <img src="assets/Installation.gif" width="1000"
 </p>
   
 ## Usage
@@ -22,6 +22,6 @@ Usage is intuitive! (see video below)
 - Click on add graph
 - Edit and custimize graph
 <p align="center">
-  <img src="assets/usage.mp4" width="1000"
+  <img src="assets/Usage.gif" width="1000"
 </p>
 
