@@ -32,7 +32,9 @@ Usage is intuitive! (see video below)
 Know that you are using the average voltage value over the whole section.
 In the future I might make this more flexible.
 
+## Contributions
 Please also let me know if there is any additions you would like to see by suggesting an enhancement in the "issues" tab on this page.
+Or you can of course send me a pull request.
 
 ## License
 
