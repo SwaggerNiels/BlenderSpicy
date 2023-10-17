@@ -34,3 +34,6 @@ In the future I might make this more flexible.
 
 Please also let me know if there is any additions you would like to see by suggesting an enhancement in the "issues" tab on this page.
 
+## License
+
+BlenderSpiky is licensed under an [MIT license](./LICENSE).
