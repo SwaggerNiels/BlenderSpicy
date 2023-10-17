@@ -1,23 +1,19 @@
-This is BlenderSpiky adapted from BlenderSpike.
+# BlenderSpiky ⚡⚡
+
+This is **BlenderSpiky** adapted from [BlenderSpike](https://github.com/ArtemKirsanov/BlenderSpike/tree/main)
+
 First of all, huge shoutout to ArtemKirsanov, he made the NEURON to Blender module.
 
-I added the **new graphing system**.
-Now you don't need to exit blender to get some great looking graphs of any NEURON section you desire. 
-<p align="center">
-  <img src="assets/Figure.png" width="500"
-    <em>Nice figures for your paper</em>
-  <img src="assets/Animation.gif" width="500"
-    <em>Nice figures for your paper</em>
-</p>
+## Graphing
+I added the **new graphing system**:
+
+Now you can get some great looking graphs within Blender! 
+|![](assets/figure.png)<br>Beautiful figures for in your paper|![](assets/Animation.gif)<br>Or animations for your presentation|
+|:-:|:-:|
+
 The graph elements are very customizable and easy in use.
-<p align="center">
-  <img src="assets/props/Remove_add.gif" width="330"
-    <em>Easily create and delete graphs</em>
-  <img src="assets/props/Fast_playback.gif" width="330"
-    <em>Fast playback speed</em>
-  <img src="assets/props/Customize.gif" width="330"
-    <em>Easily customize your graphs</em>
-</p>
+|![](assets/props/Remove_add.gif)<br>Easily create and delete graphs|![](assets/props/Fast_playback.gif)<br>Fast playback speed|![](assets/props/Customize.gif)<br>Easily customize your graphs|
+|:-:|:-:|:-:|
 
 ## Installation
 - First Install Blender: https://www.blender.org/download/
@@ -31,7 +27,7 @@ Then install the addon (see video below)
   
 ## Usage
 Usage is intuitive! (see video below)
-- Open a NEURON .pickle file [(see ArtemKirasov: BlenderSpike ⚡)](https://github.com/ArtemKirsanov/BlenderSpike/tree/main)
+- Open a NEURON .pickle file [(for more info see: BlenderSpike ⚡)](https://github.com/ArtemKirsanov/BlenderSpike/tree/main)
 - Click on a NEURON section in Blender
 - Click on add graph
 - Edit and custimize graph
