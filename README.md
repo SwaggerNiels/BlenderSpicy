@@ -1,17 +1,11 @@
 # BlenderSpiky ⚡⚡
 
-This is **BlenderSpiky** adapted from [BlenderSpike](https://github.com/ArtemKirsanov/BlenderSpike/tree/main)
+This is **BlenderSpiky** adapted from [BlenderSpike](https://github.com/ArtemKirsanov/BlenderSpike/tree/main) (huge shoutout to [ArtemKirsanov](https://github.com/ArtemKirsanov))
 
-First of all, huge shoutout to ArtemKirsanov, he made the NEURON to Blender module.
-
-## Graphing
-I added the **new graphing system**:
-
-Now you can get some great looking graphs within Blender! 
+Now you can get some great looking graphs on the side of your NEURON model within Blender! 
 |![](assets/figure.png)<br>Beautiful figures for in your paper|![](assets/Animation.gif)<br>Or animations for your presentation|
 |:-:|:-:|
 
-The graph elements are very customizable and easy in use.
 |![](assets/props/Remove_add.gif)<br>Easily create and delete graphs|![](assets/props/Fast_playback.gif)<br>Fast playback speed|![](assets/props/Customize.gif)<br>Easily customize your graphs|
 |:-:|:-:|:-:|
 
@@ -34,4 +28,9 @@ Usage is intuitive! (see video below)
 <p align="center">
   <img src="assets/Usage.gif" width="1000"
 </p>
+
+Know that you are using the average voltage value over the whole section.
+In the future I might make this more flexible.
+
+Please also let me know if there is any additions you would like to see by suggesting an enhancement in the "issues" tab on this page.
 
